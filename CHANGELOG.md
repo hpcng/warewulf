@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add multiple output formats (yaml & json) support. #447
 - More aliases for many wwctl commands
 - Add support to render template using `host` or `$(uname -n)` as the value of `overlay show --render`. #623
+- Added an alternative image URL /containers-by-name/{{.ContainerName}} that does not contain a MAC addresses
 
 ### Changed
 
