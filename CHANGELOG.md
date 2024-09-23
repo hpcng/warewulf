@@ -46,6 +46,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## v4.5.8, unreleased
 
+### Added
+
+- Add support for tag SEARCH for resolv.conf
+
 ### Changed
 
 - Interleave tmpfs across all available NUMA nodes. #1347, #1348

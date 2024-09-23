@@ -7,8 +7,11 @@
 # Source: {{ $source }}
 {{range $devname, $netdev := .NetDevs -}}
 {{range $tk, $tv := $netdev.Tags -}}
-{{ $prefix := substr 0 3 $tk -}}
-{{ if eq $prefix "DNS" -}}
+{{ $dnsprefix := slice $tk 0 3 -}}
+{{ if eq $tk "SEARCH" -}}
+search {{ $tv }}
+{{ end -}}
+{{ if eq $dnsprefix "DNS" -}}
 nameserver {{ $tv }}
 {{ end -}}
 {{ end -}}
