@@ -42,8 +42,8 @@ type WarewulfYaml struct {
 	MountsContainer []*MountEntry `yaml:"container mounts,omitempty" default:"[{\"source\": \"/etc/resolv.conf\", \"dest\": \"/etc/resolv.conf\"}]"`
 	Paths           *BuildConfig  `yaml:"paths,omitempty"`
 	WWClient        *WWClientConf `yaml:"wwclient,omitempty"`
-
-	warewulfconf string
+	RSYNC           *RSYNCConf    `yaml:"rsync,omitempty"`
+	warewulfconf    string
 }
 
 // New caches and returns a new [WarewulfYaml] initialized with empty
@@ -57,6 +57,7 @@ func New() *WarewulfYaml {
 	cachedConf.NFS = new(NFSConf)
 	cachedConf.SSH = new(SSHConf)
 	cachedConf.Paths = new(BuildConfig)
+	cachedConf.RSYNC = new(RSYNCConf)
 	if err := defaults.Set(&cachedConf); err != nil {
 		panic(err)
 	}

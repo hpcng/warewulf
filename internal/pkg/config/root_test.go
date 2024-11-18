@@ -104,7 +104,10 @@ nfs:
 container mounts:
   - source: /etc/resolv.conf
     dest: /etc/resolv.conf
-    readonly: true`
+    readonly: true
+rsync:
+  systemd name: rsyncd
+`
 
 	tempWarewulfConf, warewulfConfErr := os.CreateTemp("", "warewulf.conf-")
 	assert.NoError(t, warewulfConfErr)
@@ -149,6 +152,7 @@ container mounts:
 	assert.Equal(t, "/etc/resolv.conf", conf.MountsContainer[0].Source)
 	assert.Equal(t, "/etc/resolv.conf", conf.MountsContainer[0].Dest)
 	assert.True(t, conf.MountsContainer[0].ReadOnly())
+	assert.Equal(t, "rsyncd", conf.RSYNC.SystemdName)
 }
 
 func TestCache(t *testing.T) {

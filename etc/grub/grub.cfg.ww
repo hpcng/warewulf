@@ -14,7 +14,11 @@ container="${uri}&stage=container&compress=gz"
 system="${uri}&stage=system&compress=gz"
 runtime="${uri}&stage=runtime&compress=gz"
 
-set default={{ or .Tags.GrubMenuEntry "ww4" }}
+{{ if .Tags.GrubMenuEntry -}}
+set default={{ .Tags.GrubMenuEntry }}
+{{ else -}}
+set default=ww4
+{{ end -}}
 set timeout=5
 
 menuentry "Network boot node: {{.Id}}" --id ww4 {
@@ -42,7 +46,9 @@ menuentry "Network boot node: {{.Id}}" --id ww4 {
 menuentry "Network boot node with dracut: {{.Id}}" --id dracut {
     initramfs="${uri}&stage=initramfs"
 
-    wwinit_uri="http://{{.Ipaddr}}:{{.Port}}/provision/${net_default_mac}"
+    wwinit_ip={{.Ipaddr}}
+    wwinit_port={{.Port}}
+    wwinit_mac="${net_default_mac}"
 
     {{if .KernelVersion }}
     echo "Kernel:                {{.KernelVersion}}"
@@ -52,8 +58,9 @@ menuentry "Network boot node with dracut: {{.Id}}" --id dracut {
     echo "KernelArgs:            {{.KernelArgs}}"
 
     net_args="rd.neednet=1 {{range $devname, $netdev := .NetDevs}}{{if and $netdev.Hwaddr $netdev.Device}} ifname={{$netdev.Device}}:{{$netdev.Hwaddr}} {{end}}{{end}}"
-    wwinit_args="root=wwinit wwinit.uri=${wwinit_uri}"
-    linux $kernel wwid=${net_default_mac} {{.KernelArgs}} $net_args $wwinit_args
+    wwinit_args="rd.shell=true root=tmpfs wwinit.ip=${wwinit_ip} wwinit.port={{ .Port }} wwinit.mac=${net_default_mac} wwinit.node={{ .Id }} wwinit.container={{ .ContainerName }} wwinit.mode={{ .Ipxe }}"
+    ignition_args="ignition.config.url=http://{{ .Ipaddr }}:{{ .Port }}/overlay/persistent/ignition.json?node={{.Id}}"
+    linux $kernel wwid=${net_default_mac} {{.KernelArgs}} $net_args $wwinit_args $ignition_args
 
     if [ x$? = x0 ] ; then
         echo "Loading Container:     {{.ContainerName}}"
