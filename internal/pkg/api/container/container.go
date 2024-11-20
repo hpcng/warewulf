@@ -8,6 +8,9 @@ import (
 	"strconv"
 	"strings"
 
+	warewulfconf "github.com/warewulf/warewulf/internal/pkg/config"
+	"github.com/warewulf/warewulf/internal/pkg/configure"
+
 	"github.com/containers/image/v5/types"
 	"github.com/warewulf/warewulf/internal/pkg/api/routes/wwapiv1"
 	"github.com/warewulf/warewulf/internal/pkg/container"
@@ -46,7 +49,14 @@ func ContainerCopy(cbp *wwapiv1.ContainerCopyParameter) (err error) {
 			return err
 		}
 	}
-
+	controller := warewulfconf.Get()
+	if controller.RSYNC.Enabled() {
+		err = configure.RSYNC()
+		if err != nil {
+			err = fmt.Errorf("couldn't update rsync configuration: %w", err)
+			return
+		}
+	}
 	return fmt.Errorf("Container %s has been succesfully duplicated as %s", cbp.ContainerSource, cbp.ContainerDestination)
 }
 
@@ -121,7 +131,14 @@ ARG_LOOP:
 
 		fmt.Printf("Container has been deleted: %s\n", containerName)
 	}
-
+	controller := warewulfconf.Get()
+	if controller.RSYNC.Enabled() {
+		err = configure.RSYNC()
+		if err != nil {
+			err = fmt.Errorf("couldn't update rsync configuration: %w", err)
+			return
+		}
+	}
 	return
 }
 
@@ -205,6 +222,14 @@ func ContainerImport(cip *wwapiv1.ContainerImportParameter) (containerName strin
 		err = container.Build(cip.Name, true)
 		if err != nil {
 			err = fmt.Errorf("could not build container %s: %s", cip.Name, err.Error())
+			return
+		}
+	}
+	controller := warewulfconf.Get()
+	if controller.RSYNC.Enabled() {
+		err = configure.RSYNC()
+		if err != nil {
+			err = fmt.Errorf("couldn't update rsync configuration: %w", err)
 			return
 		}
 	}
