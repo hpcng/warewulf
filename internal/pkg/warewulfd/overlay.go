@@ -15,8 +15,8 @@ import (
 
 func OverlaySend(w http.ResponseWriter, req *http.Request) {
 	conf := warewulfconf.Get()
-	overlaySourceDir := overlay.OverlaySourceDir("wwroot")
-	if !util.IsDir(overlaySourceDir) {
+	overlaySourceDir := overlay.GetOverlay("wwroot")
+	if !util.IsDir(overlaySourceDir.Path()) {
 		wwlog.Error("Overlay source dir wwroot doesn't exist")
 		w.WriteHeader(http.StatusNoContent)
 		return
@@ -36,7 +36,7 @@ func OverlaySend(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 	}
-	overlayFile := path.Join(overlaySourceDir, rinfo.overlay)
+	overlayFile := path.Join(overlaySourceDir.Path(), rinfo.overlay)
 	if !path.IsAbs(overlayFile) {
 		wwlog.Denied("Path %s isn't absolute", overlayFile)
 		w.WriteHeader(http.StatusNotFound)
@@ -65,7 +65,8 @@ func OverlaySend(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		tstruct, err := overlay.InitStruct(node)
+		allNodes, _ := nodeDB.FindAllNodes()
+		tstruct, err := overlay.InitStruct(overlayFile, node, allNodes)
 		if err != nil {
 			wwlog.ErrorExc(err, "error when initializing template data")
 			w.WriteHeader(http.StatusInternalServerError)

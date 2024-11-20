@@ -102,7 +102,6 @@ func parseReq(req *http.Request) (parserInfo, error) {
 			return ret, errors.New("no hwaddr encoded in GET")
 		}
 	}
-	
 
 	return ret, nil
 }
