@@ -276,7 +276,7 @@ func ProvisionSend(w http.ResponseWriter, req *http.Request) {
 				wwlog.ErrorExc(err, "")
 			}
 
-			wwlog.Info("send %s -> %s", stage_file, remoteNode.Id())
+			wwlog.Info("send %s -> %s '%v' '%v'", stage_file, remoteNode.Id(), remoteNode.Tags, tmpl_data.Tags)
 
 		} else {
 			if rinfo.compress == "gz" {

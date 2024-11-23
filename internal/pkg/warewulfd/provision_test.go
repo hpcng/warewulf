@@ -24,7 +24,7 @@ var provisionSendTests = []struct {
 }{
 	{"system overlay", "/overlay-system/00:00:00:ff:ff:ff", "system overlay", 200, "10.10.10.10:9873"},
 	{"runtime overlay", "/overlay-runtime/00:00:00:ff:ff:ff", "runtime overlay", 200, "10.10.10.10:9873"},
-	{"fake overlay", "/overlay-system/00:00:00:ff:ff:ff?overlay=fake", "", 404, "10.10.10.10:9873:9873"},
+	{"fake overlay", "/overlay-system/00:00:00:ff:ff:ff?overlay=fake", "", 400, "10.10.10.10:9873:9873"},
 	{"specific overlay", "/overlay-system/00:00:00:ff:ff:ff?overlay=o1", "specific overlay", 200, "10.10.10.10:9873"},
 	{"find shim", "/efiboot/shim.efi", "", 200, "10.10.10.10:9873"},
 	{"find shim", "/efiboot/shim.efi", "", 404, "10.10.10.11:9873"},
