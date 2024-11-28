@@ -34,6 +34,7 @@ SYSCONFDIR ?= $(PREFIX)/etc
 DATADIR ?= $(PREFIX)/share
 MANDIR ?= $(DATADIR)/man
 DOCDIR ?= $(DATADIR)/doc
+CACHEDIR ?= /var/cache
 
 ifeq ($(USE_LSB_PATHS),true)
   SRVDIR ?= /srv

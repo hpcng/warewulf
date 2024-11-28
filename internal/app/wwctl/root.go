@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/warewulf/warewulf/internal/app/wwctl/clean"
 	"github.com/warewulf/warewulf/internal/app/wwctl/configure"
 	"github.com/warewulf/warewulf/internal/app/wwctl/container"
 	"github.com/warewulf/warewulf/internal/app/wwctl/genconf"
@@ -58,6 +59,7 @@ func init() {
 	rootCmd.AddCommand(version.GetCommand())
 	rootCmd.AddCommand(ssh.GetCommand())
 	rootCmd.AddCommand(genconf.GetCommand())
+	rootCmd.AddCommand(clean.GetCommand())
 }
 
 // GetRootCommand returns the root cobra.Command for the application.

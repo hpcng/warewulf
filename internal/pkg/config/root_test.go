@@ -16,7 +16,6 @@ func TestDefaultRootConf(t *testing.T) {
 	assert.True(t, conf.Warewulf.AutobuildOverlays)
 	assert.True(t, conf.Warewulf.EnableHostOverlay)
 	assert.False(t, conf.Warewulf.Syslog)
-	assert.NotEmpty(t, conf.Warewulf.DataStore)
 
 	assert.True(t, conf.DHCP.Enabled)
 	assert.Equal(t, "default", conf.DHCP.Template)
@@ -43,7 +42,6 @@ func TestDefaultRootConf(t *testing.T) {
 
 	assert.NotEmpty(t, conf.Paths.Bindir)
 	assert.NotEmpty(t, conf.Paths.Sysconfdir)
-	assert.NotEmpty(t, conf.Warewulf.DataStore)
 	assert.NotEmpty(t, conf.Paths.Localstatedir)
 	assert.NotEmpty(t, conf.Paths.Srvdir)
 	assert.NotEmpty(t, conf.Paths.Firewallddir)
@@ -52,6 +50,7 @@ func TestDefaultRootConf(t *testing.T) {
 	assert.NotEmpty(t, conf.Paths.WWChrootdir)
 	assert.NotEmpty(t, conf.Paths.WWProvisiondir)
 	assert.NotEmpty(t, conf.Paths.WWClientdir)
+	assert.NotEmpty(t, conf.Paths.Cachedir)
 }
 
 func TestInitializedFromFile(t *testing.T) {

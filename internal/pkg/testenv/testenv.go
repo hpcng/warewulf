@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -43,6 +44,7 @@ const WWOverlaydir = "var/lib/warewulf/overlays"
 const WWChrootdir = "var/lib/warewulf/chroots"
 const WWProvisiondir = "srv/warewulf"
 const WWClientdir = "warewulf"
+const Cachedir = "cache"
 
 // New creates a test environment in a temporary directory and configures
 // Warewulf to use it.
@@ -80,6 +82,7 @@ func New(t *testing.T) (env *TestEnv) {
 	conf.Paths.WWChrootdir = env.GetPath(WWChrootdir)
 	conf.Paths.WWProvisiondir = env.GetPath(WWProvisiondir)
 	conf.Paths.WWClientdir = env.GetPath(WWClientdir)
+	conf.Paths.Cachedir = env.GetPath(Cachedir)
 
 	for _, confPath := range []string{
 		conf.Paths.Sysconfdir,
@@ -154,5 +157,28 @@ func (env *TestEnv) ReadFile(t *testing.T, fileName string) string {
 // Asserts no errors occur.
 func (env *TestEnv) RemoveAll(t *testing.T) {
 	err := os.RemoveAll(env.BaseDir)
+	assert.NoError(t, err)
+}
+
+// Writes to absolute path, but checks if given file name
+// is within testenv.
+//
+// Asserts no errors occur.
+func (env *TestEnv) WriteFileAbs(t *testing.T, fileName string, content string) {
+	ok := strings.HasPrefix(fileName, env.BaseDir)
+	if !ok {
+		assert.Fail(t, "given filename is not in testenv")
+	}
+	dirName := filepath.Dir(fileName)
+	err := os.MkdirAll(dirName, 0755)
+	assert.NoError(t, err)
+	f, err := os.Create(fileName)
+	assert.NoError(t, err)
+	defer f.Close()
+	_, err = f.WriteString(content)
+	assert.NoError(t, err)
+	err = os.Chtimes(fileName,
+		time.Date(2006, time.February, 1, 3, 4, 5, 0, time.UTC),
+		time.Date(2006, time.February, 1, 3, 4, 5, 0, time.UTC))
 	assert.NoError(t, err)
 }

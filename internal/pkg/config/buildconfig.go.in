@@ -6,6 +6,7 @@ type BuildConfig struct {
 	Bindir         string `default:"@BINDIR@"`
 	Sysconfdir     string `default:"@SYSCONFDIR@"`
 	Localstatedir  string `default:"@LOCALSTATEDIR@"`
+	Cachedir       string `default:"@CACHEDIR@"`
 	Ipxesource     string `default:"@IPXESOURCE@"`
 	Srvdir         string `default:"@SRVDIR@"`
 	Firewallddir   string `default:"@FIREWALLDDIR@"`
