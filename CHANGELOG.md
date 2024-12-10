@@ -32,6 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add possibility to define a softlink target with an overlay template
 - Support defining a symlink with an overlay template. #1303
 - New "localtime" overlay to define the system time zone. #1303
+- Add a new OpenAPI v3 REST API to warewulfd at /api. #1588
 
 ### Changed
 
@@ -82,6 +83,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Bump github.com/containers/storage from 1.53.0 to 1.55.2 #1316, #892
 - Process nodes.conf path dynamically from config. #1595, #1596, #1569
 - Split overlays into distribution and site overlays. #831
+- JSON output omits empty values. #1588
 
 ### Removed
 

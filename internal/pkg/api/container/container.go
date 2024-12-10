@@ -18,38 +18,6 @@ import (
 	"github.com/warewulf/warewulf/internal/pkg/wwlog"
 )
 
-func ContainerCopy(cbp *wwapiv1.ContainerCopyParameter) (err error) {
-	if cbp == nil {
-		return fmt.Errorf("containerCopyParameter is nil")
-	}
-
-	if !container.DoesSourceExist(cbp.ContainerSource) {
-		return fmt.Errorf("container %s does not exists.", cbp.ContainerSource)
-	}
-
-	if !container.ValidName(cbp.ContainerDestination) {
-		return fmt.Errorf("container name contains illegal characters : %s", cbp.ContainerDestination)
-	}
-
-	if container.DoesSourceExist(cbp.ContainerDestination) {
-		return fmt.Errorf("An other container with the name %s already exists", cbp.ContainerDestination)
-	}
-
-	err = container.Duplicate(cbp.ContainerSource, cbp.ContainerDestination)
-	if err != nil {
-		return fmt.Errorf("could not duplicate image: %s", err.Error())
-	}
-
-	if cbp.Build {
-		err = container.Build(cbp.ContainerDestination, true)
-		if err != nil {
-			return err
-		}
-	}
-
-	return fmt.Errorf("Container %s has been succesfully duplicated as %s", cbp.ContainerSource, cbp.ContainerDestination)
-}
-
 func ContainerBuild(cbp *wwapiv1.ContainerBuildParameter) (err error) {
 	if cbp == nil {
 		return fmt.Errorf("ContainerBuildParameter is nil")
@@ -327,14 +295,8 @@ func ContainerList() (containerInfo []*wwapiv1.ContainerInfo, err error) {
 		if err != nil {
 			wwlog.Error("%s\n", err)
 		}
-		imgSize := 0
-		if imgF, err := os.Stat(container.ImageFile(source)); err == nil {
-			imgSize = int(imgF.Size())
-		}
-		imgCSize := 0
-		if imgFC, err := os.Stat(container.ImageFile(source) + ".gz"); err == nil {
-			imgCSize = int(imgFC.Size())
-		}
+		imgSize := container.ImageSize(source)
+		imgCSize := container.CompressedImageSize(source)
 		containerInfo = append(containerInfo, &wwapiv1.ContainerInfo{
 			Name:          source,
 			NodeCount:     uint32(nodemap[source]),

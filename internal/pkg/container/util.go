@@ -114,3 +114,19 @@ func DeleteImage(name string) error {
 func IsWriteAble(name string) bool {
 	return !util.IsFile(filepath.Join(SourceDir(name), "readonly"))
 }
+
+func ImageSize(name string) int {
+	if img, err := os.Stat(ImageFile(name)); err == nil {
+		return int(img.Size())
+	} else {
+		return 0
+	}
+}
+
+func CompressedImageSize(name string) int {
+	if img, err := os.Stat(CompressedImageFile(name)); err == nil {
+		return int(img.Size())
+	} else {
+		return 0
+	}
+}
