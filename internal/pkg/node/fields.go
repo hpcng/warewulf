@@ -125,6 +125,10 @@ func getNestedFieldValue(obj interface{}, name string) (value reflect.Value, err
 			}
 			value = value.Elem()
 		}
+		if !value.IsValid() {
+			err = fmt.Errorf("no value: %v", name)
+			return
+		}
 		value = value.FieldByName(fieldName)
 		if key != "" {
 			value = value.MapIndex(reflect.ValueOf(key))
