@@ -133,6 +133,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Allow iPXE to continue booting without runtime overlay. #806
 - Format errors in logs as strings. #1563
 - Fix display of profiles during node list. #1496
+- Fix internal DelProfile function to correctly operate on profiles rather than nodes. #1622
 
 ## v4.5.8, 2024-10-01
 

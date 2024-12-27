@@ -93,15 +93,15 @@ func (config *NodesYaml) AddProfile(profileId string) (*Profile, error) {
 }
 
 /*
-delete node with the given id
+delete profile with the given id
 */
-func (config *NodesYaml) DelProfile(nodeID string) error {
-	if _, ok := config.Nodes[nodeID]; !ok {
-		return errors.New("profile does not exist: " + nodeID)
+func (config *NodesYaml) DelProfile(profileID string) error {
+	if _, ok := config.NodeProfiles[profileID]; !ok {
+		return errors.New("profile does not exist: " + profileID)
 	}
 
-	wwlog.Verbose("deleting profile: %s", nodeID)
-	delete(config.Nodes, nodeID)
+	wwlog.Verbose("deleting profile: %s", profileID)
+	delete(config.NodeProfiles, profileID)
 
 	return nil
 }
