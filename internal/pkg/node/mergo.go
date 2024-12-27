@@ -113,7 +113,7 @@ func (config *NodesYaml) MergeNode(id string) (node Node, fields fieldMap, err e
 		return node, fields, err
 	}
 	originalNode := node
-	node = EmptyNode()
+	node = Node{}
 
 	fields = make(fieldMap)
 

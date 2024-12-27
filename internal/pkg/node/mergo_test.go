@@ -798,3 +798,119 @@ nodeprofiles:
 		})
 	}
 }
+
+func Test_MergeNodeKernel(t *testing.T) {
+	var tests = map[string]struct {
+		nodesConf string
+		node      string
+		kernel    *KernelConf
+	}{
+		"interference": {
+			nodesConf: `
+nodeprofiles:
+  default: {}
+nodes:
+  node1: {}
+  test:
+    profiles:
+      - default
+    kernel:
+      version: v1.0.0
+      args: kernel-args`,
+			node:   "node1",
+			kernel: nil,
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			env := testenv.New(t)
+			defer env.RemoveAll()
+			env.WriteFile("/etc/warewulf/nodes.conf", tt.nodesConf)
+
+			registry, regErr := New()
+			assert.NoError(t, regErr)
+			node, _, mergeErr := registry.MergeNode(tt.node)
+			assert.NoError(t, mergeErr)
+			assert.Equal(t, tt.kernel, node.Kernel)
+		})
+	}
+}
+
+func Test_MergeNodeIpmi(t *testing.T) {
+	var tests = map[string]struct {
+		nodesConf string
+		node      string
+		ipmi      *IpmiConf
+	}{
+		"empty single node": {
+			nodesConf: `
+nodes:
+  n1: {}`,
+			node: "n1",
+			ipmi: nil,
+		},
+		"empty node among multiple": {
+			nodesConf: `
+nodes:
+  n0: {}
+  n1: {}
+  n2: {}`,
+			node: "n1",
+			ipmi: nil,
+		},
+		"populated node among multiple": {
+			nodesConf: `
+nodes:
+  n0: {}
+  n1:
+    ipmi:
+      username: root
+      password: passw0rd
+  n2: {}`,
+			node: "n1",
+			ipmi: &IpmiConf{
+				UserName: "root",
+				Password: "passw0rd",
+			},
+		},
+		"no previous interference": {
+			nodesConf: `
+nodes:
+  n0: {}
+  n1:
+    ipmi:
+      username: root
+      password: passw0rd
+  n2: {}`,
+			node: "n0",
+			ipmi: nil,
+		},
+		"no later interference": {
+			nodesConf: `
+nodes:
+  n0: {}
+  n1:
+    ipmi:
+      username: root
+      password: passw0rd
+  n2: {}`,
+			node: "n2",
+			ipmi: nil,
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			env := testenv.New(t)
+			defer env.RemoveAll()
+			env.WriteFile("/etc/warewulf/nodes.conf", tt.nodesConf)
+
+			registry, regErr := New()
+			assert.NoError(t, regErr)
+			node, _, mergeErr := registry.MergeNode(tt.node)
+			assert.NoError(t, mergeErr)
+			assert.Equal(t, tt.ipmi, node.Ipmi)
+		})
+	}
+}

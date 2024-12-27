@@ -174,6 +174,12 @@ func ProvisionSend(w http.ResponseWriter, req *http.Request) {
 			}
 		case "grub.cfg":
 			stage_file = path.Join(conf.Paths.Sysconfdir, "warewulf/grub/grub.cfg.ww")
+			kernelArgs := ""
+			kernelVersion := ""
+			if remoteNode.Kernel != nil {
+				kernelArgs = remoteNode.Kernel.Args
+				kernelVersion = remoteNode.Kernel.Version
+			}
 			tmpl_data = &templateVars{
 				Id:            remoteNode.Id(),
 				Cluster:       remoteNode.ClusterName,
@@ -183,8 +189,8 @@ func ProvisionSend(w http.ResponseWriter, req *http.Request) {
 				Hostname:      remoteNode.Id(),
 				Hwaddr:        rinfo.hwaddr,
 				ContainerName: remoteNode.ContainerName,
-				KernelArgs:    remoteNode.Kernel.Args,
-				KernelVersion: remoteNode.Kernel.Version,
+				KernelArgs:    kernelArgs,
+				KernelVersion: kernelVersion,
 				NetDevs:       remoteNode.NetDevs,
 				Tags:          remoteNode.Tags}
 			if stage_file == "" {
