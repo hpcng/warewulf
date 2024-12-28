@@ -1,6 +1,8 @@
 package node
 
 import (
+	"fmt"
+	"net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -795,6 +797,128 @@ nodeprofiles:
 				assert.Equal(t, tt.values[i], fields.Value(tt.fields[i]))
 				assert.Equal(t, tt.sources[i], fields.Source(tt.fields[i]))
 			}
+		})
+	}
+}
+
+func Test_MergeNodeIP(t *testing.T) {
+	tests := map[string]struct {
+		nodesConf string
+		node      string
+		netdev    string
+		ipaddr    net.IP
+		ipaddrStr string
+		source    string
+	}{
+		"empty": {
+			nodesConf: `
+nodes:
+  n1:
+    network devices:
+      default: {}
+`,
+			node:      "n1",
+			netdev:    "default",
+			ipaddr:    nil,
+			ipaddrStr: "",
+			source:    "",
+		},
+		"single node value": {
+			nodesConf: `
+nodes:
+  n1:
+    network devices:
+      default:
+        ipaddr: 192.168.0.1
+`,
+			node:      "n1",
+			netdev:    "default",
+			ipaddr:    net.IPv4(192, 168, 0, 1),
+			ipaddrStr: "192.168.0.1",
+			source:    "",
+		},
+		"profile value": {
+			nodesConf: `
+nodeprofiles:
+  p1:
+    network devices:
+      default:
+        ipaddr: 192.168.0.1
+nodes:
+  n1:
+    profiles:
+    - p1
+`,
+			node:      "n1",
+			netdev:    "default",
+			ipaddr:    net.IPv4(192, 168, 0, 1),
+			ipaddrStr: "192.168.0.1",
+			source:    "p1",
+		},
+		"multi-profile value": {
+			nodesConf: `
+nodeprofiles:
+  p1:
+    network devices:
+      default:
+        ipaddr: 192.168.0.1
+  p2:
+    network devices:
+      default:
+        ipaddr: 192.168.1.1
+nodes:
+  n1:
+    profiles:
+    - p1
+    - p2
+`,
+			node:      "n1",
+			netdev:    "default",
+			ipaddr:    net.IPv4(192, 168, 1, 1),
+			ipaddrStr: "192.168.1.1",
+			source:    "p2",
+		},
+		"superseded": {
+			nodesConf: `
+nodeprofiles:
+  p1:
+    network devices:
+      default:
+        ipaddr: 192.168.0.1
+  p2:
+    network devices:
+      default:
+        ipaddr: 192.168.1.1
+nodes:
+  n1:
+    profiles:
+    - p1
+    - p2
+    network devices:
+      default:
+        ipaddr: 192.168.2.1
+`,
+			node:      "n1",
+			netdev:    "default",
+			ipaddr:    net.IPv4(192, 168, 2, 1),
+			ipaddrStr: "192.168.2.1",
+			source:    "SUPERSEDED",
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			env := testenv.New(t)
+			defer env.RemoveAll()
+			env.WriteFile("/etc/warewulf/nodes.conf", tt.nodesConf)
+
+			registry, regErr := New()
+			assert.NoError(t, regErr)
+			node, fields, mergeErr := registry.MergeNode(tt.node)
+			assert.NoError(t, mergeErr)
+			assert.Equal(t, tt.ipaddr, node.NetDevs[tt.netdev].Ipaddr)
+			assert.Equal(t, tt.ipaddrStr, fields.Value(fmt.Sprintf("NetDevs[%s].Ipaddr", tt.netdev)))
+			assert.Equal(t, tt.source, fields.Source(fmt.Sprintf("NetDevs[%s].Ipaddr", tt.netdev)))
 		})
 	}
 }

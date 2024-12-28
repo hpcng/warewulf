@@ -3,6 +3,7 @@ package node
 import (
 	"bytes"
 	"encoding/gob"
+	"net"
 	"reflect"
 	"strings"
 
@@ -85,6 +86,25 @@ func (config *NodesYaml) appendProfileProfiles(profiles []string, id string) []s
 	return profiles
 }
 
+type ipTransformer struct{}
+
+func (t ipTransformer) Transformer(typ reflect.Type) func(dst, src reflect.Value) error {
+	if typ == reflect.TypeOf(net.IP{}) {
+		return func(dst, src reflect.Value) error {
+			if !src.IsValid() || !src.CanSet() {
+				return nil
+			}
+			dst.Set(src)
+			return nil
+		}
+	}
+	return nil
+}
+
+func multiSource(value reflect.Value) bool {
+	return value.Type() != reflect.TypeOf(net.IP{}) && value.Kind() == reflect.Slice
+}
+
 // MergeNode merges the configuration of a node identified by `id` with all the profiles
 // associated with it, producing a fully composed `Node` and a `fieldMap` detailing the
 // sources of various configuration fields.
@@ -125,14 +145,14 @@ func (config *NodesYaml) MergeNode(id string) (node Node, fields fieldMap, err e
 			wwlog.Warn("error processing profile %s: %v", profileID, err)
 			continue
 		} else {
-			if err = mergo.Merge(&node.Profile, profile, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
+			if err = mergo.Merge(&node.Profile, profile, mergo.WithTransformers(ipTransformer{}), mergo.WithAppendSlice, mergo.WithOverride); err != nil {
 				return node, fields, err
 			}
 			for _, fieldName := range listFields(profile) {
 				if value, err := getNestedFieldValue(profile, fieldName); err == nil && valueStr(value) != "" {
 					source := profileID
 					prevSource := fields.Source(fieldName)
-					if value.Kind() == reflect.Slice && prevSource != "" {
+					if multiSource(value) && prevSource != "" {
 						source = strings.Join([]string{prevSource, source}, ",")
 					}
 					if value, err := getNestedFieldString(node, fieldName); err == nil {
@@ -143,14 +163,14 @@ func (config *NodesYaml) MergeNode(id string) (node Node, fields fieldMap, err e
 		}
 	}
 
-	if err = mergo.Merge(&node, originalNode, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
+	if err = mergo.Merge(&node, originalNode, mergo.WithTransformers(ipTransformer{}), mergo.WithAppendSlice, mergo.WithOverride); err != nil {
 		return node, fields, err
 	}
 	for _, fieldName := range listFields(originalNode) {
 		if value, err := getNestedFieldValue(originalNode, fieldName); err == nil && valueStr(value) != "" {
 			source := ""
 			prevSource := fields.Source(fieldName)
-			if value.Kind() == reflect.Slice && prevSource != "" {
+			if multiSource(value) && prevSource != "" {
 				source = strings.Join([]string{prevSource, id}, ",")
 			}
 			if value, err := getNestedFieldString(node, fieldName); err == nil {
