@@ -31,3 +31,7 @@ func ImageParentDir() string {
 func ImageFile(name string) string {
 	return path.Join(ImageParentDir(), name+".img")
 }
+
+func CompressedImageFile(name string) string {
+	return ImageFile(name) + ".gz"
+}

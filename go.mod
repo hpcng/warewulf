@@ -13,7 +13,6 @@ require (
 	github.com/coreos/vcontext v0.0.0-20230201181013-d72178a18687
 	github.com/creasty/defaults v1.7.0
 	github.com/fatih/color v1.18.0
-	github.com/golang/glog v1.2.3
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.23.0
 	github.com/hashicorp/go-version v1.7.0
@@ -24,6 +23,10 @@ require (
 	github.com/sassoftware/go-rpmutils v0.4.0
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
+	github.com/swaggest/openapi-go v0.2.54
+	github.com/swaggest/rest v0.2.70
+	github.com/swaggest/swgui v1.8.2
+	github.com/swaggest/usecase v1.3.1
 	github.com/talos-systems/go-smbios v0.1.1
 	golang.org/x/sys v0.26.0
 	golang.org/x/term v0.25.0
@@ -61,6 +64,7 @@ require (
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
+	github.com/go-chi/chi/v5 v5.1.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.2 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -108,6 +112,7 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rootless-containers/proto v0.1.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/santhosh-tekuri/jsonschema/v3 v3.1.0 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.8.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/sigstore/fulcio v1.4.5 // indirect
@@ -117,6 +122,9 @@ require (
 	github.com/spf13/cast v1.7.0 // indirect
 	github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace // indirect
 	github.com/stefanberger/go-pkcs11uri v0.0.0-20230803200340-78284954bff6 // indirect
+	github.com/swaggest/form/v5 v5.1.1 // indirect
+	github.com/swaggest/jsonschema-go v0.3.72 // indirect
+	github.com/swaggest/refl v1.3.0 // indirect
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635 // indirect
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399 // indirect
 	github.com/ulikunitz/xz v0.5.12 // indirect
@@ -124,6 +132,7 @@ require (
 	github.com/vbatts/go-mtree v0.5.0 // indirect
 	github.com/vbatts/tar-split v0.11.5 // indirect
 	github.com/vbauerster/mpb/v8 v8.7.5 // indirect
+	github.com/vearutop/statigz v1.4.0 // indirect
 	github.com/vincent-petithory/dataurl v1.0.0 // indirect
 	go.mongodb.org/mongo-driver v1.14.0 // indirect
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352 // indirect
@@ -137,4 +146,5 @@ require (
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/text v0.19.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241021214115-324edc3d5d38 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

@@ -113,7 +113,7 @@ func (config *NodesYaml) GetNodeOnly(id string) (node Node, err error) {
 }
 
 /*
-Return pointer to the  node with the id string without the merged in nodes, return ErrMotFound
+Return pointer to the  node with the id string without the merged in nodes, return ErrNotFound
 otherwise
 */
 func (config *NodesYaml) GetNodeOnlyPtr(id string) (*Node, error) {
