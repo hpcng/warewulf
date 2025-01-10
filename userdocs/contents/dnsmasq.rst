@@ -41,6 +41,12 @@ After the installation you have to instruct ``warewulf`` to use ``dnsmasq`` as i
 
 The configuration of ``dnsmasq`` doesn't need to be changed, as the default configuration includes all files with following pattern ``/etc/dnsmasq.d/*conf`` into its configuration.
 This configuration is created by the overlay template ``host:/etc/dnsmasq.d/ww4-hosts.conf.ww``.
+
+.. note::
+
+   In certain OS versions, such as Rocky Linux 9, ``dnsmasq`` is configured to listen locally via the ``interface=lo`` option by default in ``/etc/dnsmasq.conf``. 
+   Replace this with the interface associated with your Warewulf network, or remove/comment out the interface option entirely to enable listening on all interfaces.
+
 In order to build this template run
 
 .. code-block:: shell

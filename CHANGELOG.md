@@ -88,6 +88,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved syncuser conflict help text. #1614
 - Parallelized overlay build. #1018
 - Parallelized and optimized overlay build. #1018
+- Added note about dnsmasq interface options in Rocky 9.
 
 ### Removed
 
