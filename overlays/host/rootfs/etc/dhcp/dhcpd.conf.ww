@@ -26,17 +26,17 @@ if substring (option vendor-class-identifier, 0, 9) = "PXEClient" {
   next-server {{ $.Ipaddr }};
   if substring (option vendor-class-identifier, 15, 5) = "00000" {
     # pure BIOS clients will get iPXE configuration
-    filename "http://{{$.Ipaddr}}:{{$.Warewulf.Port}}/ipxe/${mac:hexhyp}";
+    filename "http://${next-server}:{{$.Warewulf.Port}}/ipxe/${mac:hexhyp}";
   } else {
     # EFI clients will get shim and grub instead
     filename "warewulf/shim.efi";
   }
 } elsif substring (option vendor-class-identifier, 0, 10) = "HTTPClient" {
-  filename "http://{{$.Ipaddr}}:{{$.Warewulf.Port}}/efiboot/shim.efi";
+  filename "http:${next-server}:{{$.Warewulf.Port}}/efiboot/shim.efi";
 }
 {{- else }}
 if exists user-class and option user-class = "iPXE" {
-    filename "http://{{$.Ipaddr}}:{{$.Warewulf.Port}}/ipxe/${mac:hexhyp}?assetkey=${asset}&uuid=${uuid}";
+    filename "http:${next-server}:{{$.Warewulf.Port}}/ipxe/${mac:hexhyp}?assetkey=${asset}&uuid=${uuid}";
 } else {
 {{range $type,$name := $.Tftp.IpxeBinaries }}
     if option architecture-type = {{ $type }} {
@@ -49,7 +49,8 @@ if exists user-class and option user-class = "iPXE" {
 subnet {{$.Network}} netmask {{$.Netmask}} {
     max-lease-time 120;
     range {{$.Dhcp.RangeStart}} {{$.Dhcp.RangeEnd}};
-    next-server {{.Ipaddr}};
+    {{$r := random .Rrbootaddrs}}
+    next-server {{(index .Rrbootaddrs $r)}};
 }
 
 {{- if eq .Dhcp.Template "static" }}

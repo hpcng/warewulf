@@ -24,6 +24,7 @@ type TemplateStruct struct {
 	BuildTimeUnix string
 	BuildSource   string
 	Ipaddr        string
+	Rrbootaddrs   []string
 	Ipaddr6       string
 	Netmask       string
 	Network       string
@@ -68,6 +69,7 @@ func InitStruct(overlayName string, nodeData node.Node, allNodes []node.Node) (T
 	tstruct.Paths = *controller.Paths
 	tstruct.Warewulf = *controller.Warewulf
 	tstruct.Ipaddr = controller.Ipaddr
+	tstruct.Rrbootaddrs = controller.Rrbootaddrs
 	tstruct.Ipaddr6 = controller.Ipaddr6
 	tstruct.Netmask = controller.Netmask
 	tstruct.Network = controller.Network
