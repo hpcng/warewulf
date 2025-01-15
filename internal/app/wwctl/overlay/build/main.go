@@ -64,7 +64,7 @@ func CobraRunE(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	oldMask := syscall.Umask(007)
+	oldMask := syscall.Umask(000)
 	defer syscall.Umask(oldMask)
 
 	if len(OverlayNames) > 0 {
