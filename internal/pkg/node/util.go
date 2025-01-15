@@ -66,7 +66,7 @@ func ObjectIsEmpty(obj interface{}) bool {
 	}
 	for i := 0; i < varType.NumField(); i++ {
 		if varType.Field(i).Type.Kind() == reflect.String && !varVal.Field(i).IsZero() {
-			val := varVal.Field(i).Interface().(string)
+			val := varVal.Field(i).String()
 			if val != "" {
 				return false
 			}
