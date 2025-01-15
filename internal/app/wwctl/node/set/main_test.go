@@ -382,6 +382,30 @@ nodes:
         ipaddr: 172.16.130.101
 `,
 		},
+		{
+			name:    "single node set onboot",
+			args:    []string{"--netname", "default", "--onboot=true", "n01"},
+			wantErr: false,
+			stdout:  "",
+			inDB: `nodeprofiles:
+  default: {}
+nodes:
+  n01:
+    network devices:
+      default:
+        ipaddr: 172.16.130.101
+
+`,
+			outDb: `nodeprofiles:
+  default: {}
+nodes:
+  n01:
+    network devices:
+      default:
+        ipaddr: 172.16.130.101
+        onboot: "true"
+`,
+		},
 
 		{
 			name:    "single node set fs,part and disk",
