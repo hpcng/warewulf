@@ -6,8 +6,8 @@ import (
 	"github.com/spf13/cobra"
 	apiNode "github.com/warewulf/warewulf/internal/pkg/api/node"
 	"github.com/warewulf/warewulf/internal/pkg/api/routes/wwapiv1"
-	"github.com/warewulf/warewulf/internal/pkg/api/util"
 	"github.com/warewulf/warewulf/internal/pkg/node"
+	"github.com/warewulf/warewulf/internal/pkg/util"
 )
 
 func CobraRunE(cmd *cobra.Command, args []string) (err error) {
@@ -28,7 +28,7 @@ func CobraRunE(cmd *cobra.Command, args []string) (err error) {
 		if len(nodeList) == 0 {
 			return
 		}
-		yes := util.ConfirmationPrompt(fmt.Sprintf("Are you sure you want to delete %d nodes(s)", len(nodeList)))
+		yes := util.Confirm(fmt.Sprintf("Are you sure you want to delete %d nodes(s)", len(nodeList)))
 		if !yes {
 			return
 		}

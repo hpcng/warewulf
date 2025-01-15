@@ -1,132 +1,136 @@
 package edit
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 
-	apinode "github.com/warewulf/warewulf/internal/pkg/api/node"
-
 	"github.com/spf13/cobra"
-	apiprofile "github.com/warewulf/warewulf/internal/pkg/api/profile"
-	"github.com/warewulf/warewulf/internal/pkg/api/routes/wwapiv1"
-	apiutil "github.com/warewulf/warewulf/internal/pkg/api/util"
 	"github.com/warewulf/warewulf/internal/pkg/node"
 	"github.com/warewulf/warewulf/internal/pkg/util"
+	"github.com/warewulf/warewulf/internal/pkg/warewulfd"
 	"github.com/warewulf/warewulf/internal/pkg/wwlog"
 	"gopkg.in/yaml.v3"
 )
 
 func CobraRunE(cmd *cobra.Command, args []string) error {
-	canWrite, err := apiutil.CanWriteConfig()
-	if err != nil {
-		return fmt.Errorf("while checking whether can write config, err: %s", err)
+	if !node.CanWriteConfig() {
+		return fmt.Errorf("can not write to config: exiting")
 	}
-	if !canWrite.CanWriteConfig {
-		return fmt.Errorf("can not write to config exiting")
-	}
+
 	editor := os.Getenv("EDITOR")
 	if editor == "" {
 		editor = "/bin/vi"
 	}
-	if len(args) == 0 {
-		args = append(args, ".*")
-	}
-	filterList := wwapiv1.NodeList{
-		Output: args,
-	}
-	profileListMsg := apiprofile.FilteredProfiles(&filterList)
-	profileMap := make(map[string]*node.Profile)
-	// got proper yaml back
-	_ = yaml.Unmarshal([]byte(profileListMsg.NodeConfMapYaml), profileMap)
-	file, err := os.CreateTemp(os.TempDir(), "ww4ProfileEdit*.yaml")
-	if err != nil {
-		wwlog.Error("Could not create temp file:%s \n", err)
-	}
-	defer os.Remove(file.Name())
-	for {
-		_ = file.Truncate(0)
-		_, _ = file.Seek(0, 0)
-		if !NoHeader {
-			yamlTemplate := node.UnmarshalConf(node.Profile{}, []string{"tagsdel"})
-			_, _ = file.WriteString("#profilename:\n#  " + strings.Join(yamlTemplate, "\n#  ") + "\n")
-		}
-		_, _ = file.WriteString(profileListMsg.NodeConfMapYaml)
-		_, _ = file.Seek(0, 0)
-		hasher := sha256.New()
-		if _, err := io.Copy(hasher, file); err != nil {
-			wwlog.Error("Problems getting checksum of file %s\n", err)
-		}
-		sum1 := hex.EncodeToString(hasher.Sum(nil))
-		err = util.ExecInteractive(editor, file.Name())
-		if err != nil {
-			return fmt.Errorf("editor process existed with non-zero: %s", err)
-		}
-		_, _ = file.Seek(0, 0)
-		hasher.Reset()
-		if _, err := io.Copy(hasher, file); err != nil {
-			wwlog.Error("Problems getting checksum of file %s\n", err)
-		}
-		sum2 := hex.EncodeToString(hasher.Sum(nil))
-		wwlog.Debug("Hashes are before %s and after %s\n", sum1, sum2)
-		if sum1 != sum2 {
-			wwlog.Debug("Profiles were modified")
-			modifiedProfileMap := make(map[string]*node.Profile)
-			_, _ = file.Seek(0, 0)
-			// ignore error as only may occurs under strange circumstances
-			buffer, _ := io.ReadAll(file)
-			err = yaml.Unmarshal(buffer, modifiedProfileMap)
-			if err != nil {
-				yes := apiutil.ConfirmationPrompt(fmt.Sprintf("Got following error on parsing: %s, Retry", err))
-				if yes {
-					continue
-				} else {
-					break
-				}
-			}
-			var checkErrors []error
-			for nodeName, node := range modifiedProfileMap {
-				err = node.Check()
-				if err != nil {
-					checkErrors = append(checkErrors, fmt.Errorf("profile: %s parse error: %s", nodeName, err))
-				}
-			}
-			if len(checkErrors) != 0 {
-				yes := apiutil.ConfirmationPrompt(fmt.Sprintf("Got following error on parsing: %s, Retry", checkErrors))
-				if yes {
-					continue
-				} else {
-					break
-				}
-			}
-			pList := make([]string, len(profileMap))
-			i := 0
-			for key := range profileMap {
-				pList[i] = key
-				i++
-			}
-			yes := apiutil.ConfirmationPrompt(fmt.Sprintf("Are you sure you want to modify %d nodes", len(modifiedProfileMap)))
-			if yes {
-				err = apiprofile.ProfileDelete(&wwapiv1.NodeDeleteParameter{NodeNames: pList, Force: true})
+	wwlog.Debug("using editor: %s", editor)
 
-				if err != nil {
-					wwlog.Verbose("Problem deleting nodes before modification %s", err)
-				}
-				buffer, _ = yaml.Marshal(modifiedProfileMap)
-				newHash := apinode.Hash()
-				err = apiprofile.ProfileAddFromYaml(&wwapiv1.NodeAddParameter{
-					NodeConfYaml: string(buffer),
-					Hash:         newHash.Hash,
-				})
-				if err != nil {
-					return fmt.Errorf("got following problem when writing back yaml: %s", err)
-				}
-				break
+	registry, regErr := node.New()
+	if regErr != nil {
+		return regErr
+	}
+
+	if len(args) == 0 {
+		for profileID := range registry.NodeProfiles {
+			args = append(args, profileID)
+		}
+	}
+	wwlog.Debug("profile list: %v", args)
+
+	tempFile, tempErr := os.CreateTemp(os.TempDir(), "ww4ProfileEdit*.yaml")
+	if tempErr != nil {
+		return fmt.Errorf("could not create temp file: %s", tempErr)
+	}
+	defer os.Remove(tempFile.Name())
+
+	if !NoHeader {
+		yamlTemplate := node.UnmarshalConf(node.Profile{}, nil)
+		if _, err := tempFile.WriteString("#profilename:\n#  " + strings.Join(yamlTemplate, "\n#  ") + "\n"); err != nil {
+			return err
+		}
+	}
+
+	origProfiles := make(map[string]*node.Profile)
+	for _, profileID := range args {
+		if n, ok := registry.NodeProfiles[profileID]; ok {
+			origProfiles[profileID] = n
+		}
+	}
+
+	if origYaml, err := util.EncodeYaml(origProfiles); err != nil {
+		return err
+	} else if _, err := tempFile.Write(origYaml); err != nil {
+		return err
+	}
+
+	sum1, sumErr := util.HashFile(tempFile)
+	if sumErr != nil {
+		return sumErr
+	}
+	wwlog.Debug("original hash: %s", sum1)
+
+	for {
+		if err := util.ExecInteractive(editor, tempFile.Name()); err != nil {
+			return fmt.Errorf("editor process exited with non-zero code: %w", err)
+		}
+
+		sum2, sumErr := util.HashFile(tempFile)
+		if sumErr != nil {
+			return sumErr
+		}
+		wwlog.Debug("edited hash: %s", sum2)
+
+		if sum1 != sum2 {
+			wwlog.Debug("modified")
+
+			editYaml, err := io.ReadAll(tempFile)
+			if err != nil {
+				return err
 			}
+			editProfiles := make(map[string]*node.Profile)
+			if err := yaml.Unmarshal(editYaml, &editProfiles); err != nil {
+				wwlog.Error("%v\n", err)
+				if util.Confirm("Parse error: retry") {
+					continue
+				} else {
+					break
+				}
+			}
+
+			var added, deleted, updated int
+			for profileID := range origProfiles {
+				if editProfile, ok := editProfiles[profileID]; !ok || editProfile == nil {
+					wwlog.Verbose("delete profile: %s", profileID)
+					delete(registry.NodeProfiles, profileID)
+					deleted += 1
+				}
+			}
+			for profileID := range editProfiles {
+				if _, ok := origProfiles[profileID]; !ok {
+					wwlog.Verbose("add profile: %s", profileID)
+					added += 1
+					registry.NodeProfiles[profileID] = editProfiles[profileID]
+				} else if equalYaml, err := util.EqualYaml(origProfiles[profileID], editProfiles[profileID]); err != nil {
+					return err
+				} else if !equalYaml {
+					wwlog.Verbose("update profile: %s", profileID)
+					updated += 1
+					registry.NodeProfiles[profileID] = editProfiles[profileID]
+				}
+			}
+
+			if util.Confirm(fmt.Sprintf("Are you sure you want to add %d, delete %d, and update %d profiles", added, deleted, updated)) {
+				if err := registry.Persist(); err != nil {
+					return err
+				}
+
+				if err := warewulfd.DaemonReload(); err != nil {
+					return fmt.Errorf("failed to reload warewulf daemon: %w", err)
+				}
+			}
+			break
 		} else {
+			wwlog.Verbose("No changes")
 			break
 		}
 	}

@@ -27,10 +27,15 @@ func (profileConf *Profile) Check() (err error) {
 }
 
 func check(infoType reflect.Type, infoVal reflect.Value) (err error) {
+	if !infoVal.Elem().IsValid() {
+		return nil
+	}
 	// now iterate of every field
 	for i := 0; i < infoVal.Elem().NumField(); i++ {
-		if infoType.Elem().Field(i).Type.Kind() == reflect.String {
-			newFmt, err := checker(infoVal.Elem().Field(i).Interface().(string), infoType.Elem().Field(i).Tag.Get("type"))
+		if !infoType.Elem().Field(i).IsExported() {
+			continue
+		} else if infoType.Elem().Field(i).Type.Kind() == reflect.String {
+			newFmt, err := checker(infoVal.Elem().Field(i).String(), infoType.Elem().Field(i).Tag.Get("type"))
 			if err != nil {
 				return fmt.Errorf("field: %s value:%s err: %s", infoType.Elem().Field(i).Name, infoVal.Elem().Field(i).String(), err)
 			} else if newFmt != "" {

@@ -10,8 +10,8 @@ import (
 	"github.com/spf13/cobra"
 	apinode "github.com/warewulf/warewulf/internal/pkg/api/node"
 	"github.com/warewulf/warewulf/internal/pkg/api/routes/wwapiv1"
-	apiutil "github.com/warewulf/warewulf/internal/pkg/api/util"
 	"github.com/warewulf/warewulf/internal/pkg/node"
+	"github.com/warewulf/warewulf/internal/pkg/util"
 	"gopkg.in/yaml.v3"
 )
 
@@ -30,7 +30,7 @@ func CobraRunE(cmd *cobra.Command, args []string) error {
 	if !ImportCVS {
 		err = yaml.Unmarshal(buffer, importMap)
 		if err == nil {
-			yes := apiutil.ConfirmationPrompt(fmt.Sprintf("Are you sure you want to modify %d nodes", len(importMap)))
+			yes := util.Confirm(fmt.Sprintf("Are you sure you want to modify %d nodes", len(importMap)))
 			if yes {
 				err = apinode.NodeAddFromYaml(&wwapiv1.NodeYaml{NodeConfMapYaml: string(buffer)})
 				if err != nil {
@@ -68,7 +68,7 @@ func CobraRunE(cmd *cobra.Command, args []string) error {
 				}
 			}
 		}
-		yes := apiutil.ConfirmationPrompt(fmt.Sprintf("Are you sure you want to import %d nodes", len(importMap)))
+		yes := util.Confirm(fmt.Sprintf("Are you sure you want to import %d nodes", len(importMap)))
 		if yes {
 			// create second buffer an marshall nodeMap to it
 			buffer, err = yaml.Marshal(importMap)

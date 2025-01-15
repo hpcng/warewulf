@@ -1,17 +1,12 @@
 package edit
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
-	apinode "github.com/warewulf/warewulf/internal/pkg/api/node"
-	"github.com/warewulf/warewulf/internal/pkg/api/routes/wwapiv1"
-	apiutil "github.com/warewulf/warewulf/internal/pkg/api/util"
 	"github.com/warewulf/warewulf/internal/pkg/node"
 	"github.com/warewulf/warewulf/internal/pkg/util"
 	"github.com/warewulf/warewulf/internal/pkg/warewulfd"
@@ -20,119 +15,124 @@ import (
 )
 
 func CobraRunE(cmd *cobra.Command, args []string) error {
-	canWrite, err := apiutil.CanWriteConfig()
-	if err != nil {
-		return fmt.Errorf("while checking whether can write config, err: %w", err)
+	if !node.CanWriteConfig() {
+		return fmt.Errorf("can not write to config: exiting")
 	}
-	if !canWrite.CanWriteConfig {
-		return fmt.Errorf("can not write to config exiting")
-	}
+
 	editor := os.Getenv("EDITOR")
 	if editor == "" {
 		editor = "/bin/vi"
 	}
+	wwlog.Debug("using editor: %s", editor)
+
+	registry, regErr := node.New()
+	if regErr != nil {
+		return regErr
+	}
+
 	if len(args) == 0 {
-		args = append(args, ".*")
+		for nodeID := range registry.Nodes {
+			args = append(args, nodeID)
+		}
 	}
-	filterList := wwapiv1.NodeList{
-		Output: args,
+	wwlog.Debug("node list: %v", args)
+
+	tempFile, tempErr := os.CreateTemp(os.TempDir(), "ww4NodeEdit*.yaml")
+	if tempErr != nil {
+		return fmt.Errorf("could not create temp file: %s", tempErr)
 	}
-	nodeListMsg := apinode.FilteredNodes(&filterList)
-	nodeMap := make(map[string]*node.Node)
-	// got proper yaml back
-	_ = yaml.Unmarshal([]byte(nodeListMsg.NodeConfMapYaml), nodeMap)
-	file, err := os.CreateTemp(os.TempDir(), "ww4NodeEdit*.yaml")
-	if err != nil {
-		return fmt.Errorf("could not create temp file: %s", err)
+	defer os.Remove(tempFile.Name())
+
+	if !NoHeader {
+		yamlTemplate := node.UnmarshalConf(node.Node{}, nil)
+		if _, err := tempFile.WriteString("#nodename:\n#  " + strings.Join(yamlTemplate, "\n#  ") + "\n"); err != nil {
+			return err
+		}
 	}
-	defer os.Remove(file.Name())
+
+	origNodes := make(map[string]*node.Node)
+	for _, nodeID := range args {
+		if n, ok := registry.Nodes[nodeID]; ok {
+			origNodes[nodeID] = n
+		}
+	}
+
+	if origYaml, err := util.EncodeYaml(origNodes); err != nil {
+		return err
+	} else if _, err := tempFile.Write(origYaml); err != nil {
+		return err
+	}
+
+	sum1, sumErr := util.HashFile(tempFile)
+	if sumErr != nil {
+		return sumErr
+	}
+	wwlog.Debug("original hash: %s", sum1)
+
 	for {
-		_ = file.Truncate(0)
-		_, _ = file.Seek(0, 0)
-		if !NoHeader {
-			yamlTemplate := node.UnmarshalConf(node.Node{}, []string{"tagsdel"})
-			_, _ = file.WriteString("#nodename:\n#  " + strings.Join(yamlTemplate, "\n#  ") + "\n")
+		if err := util.ExecInteractive(editor, tempFile.Name()); err != nil {
+			return fmt.Errorf("editor process exited with non-zero code: %w", err)
 		}
-		_, _ = file.WriteString(nodeListMsg.NodeConfMapYaml)
-		_, _ = file.Seek(0, 0)
-		hasher := sha256.New()
-		if _, err := io.Copy(hasher, file); err != nil {
-			wwlog.Error("Problems getting checksum of file %s\n", err)
+
+		sum2, sumErr := util.HashFile(tempFile)
+		if sumErr != nil {
+			return sumErr
 		}
-		sum1 := hex.EncodeToString(hasher.Sum(nil))
-		err = util.ExecInteractive(editor, file.Name())
-		if err != nil {
-			return fmt.Errorf("editor process existed with non-zero")
-		}
-		_, _ = file.Seek(0, 0)
-		hasher.Reset()
-		if _, err := io.Copy(hasher, file); err != nil {
-			wwlog.Error("Problems getting checksum of file %s\n", err)
-		}
-		sum2 := hex.EncodeToString(hasher.Sum(nil))
-		wwlog.Debug("Hashes are before %s and after %s\n", sum1, sum2)
+		wwlog.Debug("edited hash: %s", sum2)
+
 		if sum1 != sum2 {
-			wwlog.Debug("Nodes were modified")
-			modifiedNodeMap := make(map[string]*node.Node)
-			_, _ = file.Seek(0, 0)
-			// ignore error as only may occurs under strange circumstances
-			buffer, _ := io.ReadAll(file)
-			err = yaml.Unmarshal(buffer, modifiedNodeMap)
+			wwlog.Debug("modified")
+
+			editYaml, err := io.ReadAll(tempFile)
 			if err != nil {
-				yes := apiutil.ConfirmationPrompt(fmt.Sprintf("Got following error on parsing: %s, Retry", err))
-				if yes {
-					continue
-				} else {
-					break
-				}
+				return err
 			}
-			var checkErrors []error
-			for nodeName, node := range modifiedNodeMap {
-				err = node.Check()
-				if err != nil {
-					checkErrors = append(checkErrors, fmt.Errorf("node: %s parse error: %s", nodeName, err))
-				}
-			}
-			if len(checkErrors) != 0 {
-				yes := apiutil.ConfirmationPrompt(fmt.Sprintf("Got following error on parsing: %s, Retry", checkErrors))
-				if yes {
+			editNodes := make(map[string]*node.Node)
+			if err := yaml.Unmarshal(editYaml, &editNodes); err != nil {
+				wwlog.Error("%v\n", err)
+				if util.Confirm("Parse error: retry") {
 					continue
 				} else {
 					break
 				}
 			}
 
-			nodeList := make([]string, len(nodeMap))
-			i := 0
-			for key := range nodeMap {
-				nodeList[i] = key
-				i++
-			}
-			yes := apiutil.ConfirmationPrompt(fmt.Sprintf("Are you sure you want to modify %d nodes", len(modifiedNodeMap)))
-			if yes {
-				err = apinode.NodeDelete(&wwapiv1.NodeDeleteParameter{NodeNames: nodeList, Force: true})
-				if err != nil {
-					wwlog.Verbose("Problem deleting nodes before modification %s", err)
+			var added, deleted, updated int
+			for nodeID := range origNodes {
+				if editNode, ok := editNodes[nodeID]; !ok || editNode == nil {
+					wwlog.Verbose("delete node: %s", nodeID)
+					delete(registry.Nodes, nodeID)
+					deleted += 1
 				}
-				buffer, _ = yaml.Marshal(modifiedNodeMap)
-				newHash := apinode.Hash()
-				err = apinode.NodeAddFromYaml(&wwapiv1.NodeYaml{
-					NodeConfMapYaml: string(buffer),
-					Hash:            newHash.Hash,
-				})
-				if err != nil {
-					return fmt.Errorf("got following problem when writing back yaml: %s", err)
-				}
-				break
 			}
+			for nodeID := range editNodes {
+				if _, ok := origNodes[nodeID]; !ok {
+					wwlog.Verbose("add node: %s", nodeID)
+					added += 1
+					registry.Nodes[nodeID] = editNodes[nodeID]
+				} else if equalYaml, err := util.EqualYaml(origNodes[nodeID], editNodes[nodeID]); err != nil {
+					return err
+				} else if !equalYaml {
+					wwlog.Verbose("update node: %s", nodeID)
+					updated += 1
+					registry.Nodes[nodeID] = editNodes[nodeID]
+				}
+			}
+
+			if util.Confirm(fmt.Sprintf("Are you sure you want to add %d, delete %d, and update %d nodes", added, deleted, updated)) {
+				if err := registry.Persist(); err != nil {
+					return err
+				}
+
+				if err := warewulfd.DaemonReload(); err != nil {
+					return fmt.Errorf("failed to reload warewulf daemon: %w", err)
+				}
+			}
+			break
 		} else {
+			wwlog.Verbose("No changes")
 			break
 		}
-	}
-
-	err = warewulfd.DaemonReload()
-	if err != nil {
-		return fmt.Errorf("failed to reload warewulf daemon: %w", err)
 	}
 
 	return nil

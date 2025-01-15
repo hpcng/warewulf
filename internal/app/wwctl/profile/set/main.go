@@ -7,8 +7,8 @@ import (
 	"github.com/spf13/cobra"
 	apiprofile "github.com/warewulf/warewulf/internal/pkg/api/profile"
 	"github.com/warewulf/warewulf/internal/pkg/api/routes/wwapiv1"
-	"github.com/warewulf/warewulf/internal/pkg/api/util"
 	"github.com/warewulf/warewulf/internal/pkg/node"
+	"github.com/warewulf/warewulf/internal/pkg/util"
 	"github.com/warewulf/warewulf/internal/pkg/wwlog"
 	"gopkg.in/yaml.v3"
 )
@@ -78,7 +78,7 @@ func CobraRunE(vars *variables) func(cmd *cobra.Command, args []string) (err err
 			if err != nil {
 				return err
 			}
-			yes := util.ConfirmationPrompt(fmt.Sprintf("Are you sure you want to modify %d profile(s)", profileCount))
+			yes := util.Confirm(fmt.Sprintf("Are you sure you want to modify %d profile(s)", profileCount))
 			if !yes {
 				return err
 			}
