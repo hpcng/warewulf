@@ -76,9 +76,13 @@ func NodeList(nodeGet *wwapiv1.GetNodeList) (nodeList wwapiv1.NodeList, err erro
 		nodeList.Output = append(nodeList.Output,
 			fmt.Sprintf("%s:=:%s:=:%s:=:%s", "NODE NAME", "KERNEL VERSION", "CONTAINER", "OVERLAYS (S/R)"))
 		for _, n := range node.FilterNodeListByName(nodes, nodeGet.Nodes) {
+			kernelVersion := ""
+			if n.Kernel != nil {
+				kernelVersion = n.Kernel.Version
+			}
 			nodeList.Output = append(nodeList.Output,
 				fmt.Sprintf("%s:=:%s:=:%s:=:%s", n.Id(),
-					n.Kernel.Version,
+					kernelVersion,
 					n.ContainerName,
 					strings.Join(n.SystemOverlay, ",")+"/"+strings.Join(n.RuntimeOverlay, ",")))
 		}

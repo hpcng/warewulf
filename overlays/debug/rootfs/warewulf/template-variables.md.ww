@@ -27,9 +27,12 @@ data from other structures.
 - Discoverable: {{ .Discoverable }}
 - Profiles: {{ range $index, $value := .Profiles }}{{ if $index }},{{ end }}{{ $value }}{{ end }}
 - Tags: {{ range $key, $value := .Tags }}{{ $key }}={{ $value }} {{ end }}
+{{ if .Kernel }}
 - Kernel:
   - Version: {{ .Kernel.Version }}
   - Args: {{ .Kernel.Args }}
+{{- end }}
+{{ if .Ipmi }}
 - Ipmi:
   - UserName: {{ .Ipmi.UserName }}
   - Password: {{ .Ipmi.Password }}
@@ -40,6 +43,7 @@ data from other structures.
   - Interface: {{ .Ipmi.Interface }}
   - Write: {{ .Ipmi.Write }}
   - Tags: {{ range $key, $value := .Ipmi.Tags }}{{ $key }}={{ $value }} {{ end }}
+{{- end }}
 {{- range $index, $netdev := .NetDevs }}
 - NetDevs[{{ $index }}]:
   - Type: {{ $netdev.Type }}
@@ -136,9 +140,12 @@ data from other structures.
   - AssetKey: {{ $node.AssetKey }}
   - Profiles: {{ $node.Profiles }}
   - Tags: {{ range $key, $value := $node.Tags }}{{ $key }}={{ $value }} {{ end }}
+{{ if .Kernel }}
   - Kernel
     - Version: {{ $node.Kernel.Version }}
     - Args: {{ $node.Kernel.Args }}
+{{- end }}
+{{ if .Ipmi }}
   - Ipmi:
     - Ipaddr: {{ $node.Ipmi.Ipaddr }}
     - Netmask: {{ $node.Ipmi.Netmask }}
@@ -149,6 +156,7 @@ data from other structures.
     - Interface: {{ $node.Ipmi.Interface }}
     - Write: {{ $node.Ipmi.Write }}
     - Tags: {{ range $key, $value := $node.Ipmi.Tags }}{{ $key }}={{ $value }} {{ end }}
+{{- end }}
 {{- range $index, $netdev := $node.NetDevs }}
   - NetDevs[{{ $index }}]:
     - Type: {{ $netdev.Type }}

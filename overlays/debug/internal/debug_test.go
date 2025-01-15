@@ -85,9 +85,11 @@ data from other structures.
 - Discoverable: 
 - Profiles: default
 - Tags: 
+
 - Kernel:
   - Version: 
   - Args: quiet crashkernel=no vga=791 net.naming-scheme=v238
+
 - Ipmi:
   - UserName: user
   - Password: password
@@ -195,9 +197,11 @@ data from other structures.
   - AssetKey: 
   - Profiles: [default]
   - Tags: 
+
   - Kernel
     - Version: 
     - Args: quiet crashkernel=no vga=791 net.naming-scheme=v238
+
   - Ipmi:
     - Ipaddr: 192.168.4.21
     - Netmask: 255.255.255.0
@@ -250,19 +254,11 @@ data from other structures.
   - AssetKey: 
   - Profiles: [default]
   - Tags: 
+
   - Kernel
     - Version: 
     - Args: quiet crashkernel=no vga=791 net.naming-scheme=v238
-  - Ipmi:
-    - Ipaddr: <nil>
-    - Netmask: <nil>
-    - Port: 
-    - Gateway: <nil>
-    - UserName: 
-    - Password: 
-    - Interface: 
-    - Write: 
-    - Tags: 
+
   - NetDevs[default]:
     - Type: 
     - OnBoot: true

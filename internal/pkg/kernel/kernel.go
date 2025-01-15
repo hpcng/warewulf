@@ -75,7 +75,7 @@ func FromNode(node *node.Node) *Kernel {
 	wwlog.Debug("FromNode(%v)", node)
 	if node.ContainerName == "" {
 		return nil
-	} else if node.Kernel.Version != "" {
+	} else if node.Kernel != nil && node.Kernel.Version != "" {
 		kernel := &Kernel{ContainerName: node.ContainerName, Path: filepath.Join("/", node.Kernel.Version)}
 		if util.IsFile(kernel.FullPath()) {
 			return kernel
