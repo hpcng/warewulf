@@ -23,7 +23,7 @@ kernel --name kernel ${uri}&stage=kernel || goto reboot
 echo Downloading initramfs
 initrd --name initramfs ${uri}&stage=initramfs || goto reboot
 
-set dracut_net rd.neednet=1 {{range $devname, $netdev := .NetDevs}}{{if and $netdev.Hwaddr $netdev.Device}} ifname={{$netdev.Device}}:{{$netdev.Hwaddr}} {{end}}{{end}}
+set dracut_net rd.neednet=1 {{range $devname, $netdev := .NetDevs}}{{if and $netdev.Hwaddr $netdev.Device}} ifname={{$netdev.Device}}:{{$netdev.Hwaddr}} ip={{$netdev.Device}}:dhcp {{end}}{{end}}
 set dracut_wwinit root=wwinit wwinit.uri=${baseuri} init=/init
 
 echo Booting initramfs
