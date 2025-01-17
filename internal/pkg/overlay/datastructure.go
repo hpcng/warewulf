@@ -8,6 +8,7 @@ import (
 	"time"
 
 	warewulfconf "github.com/warewulf/warewulf/internal/pkg/config"
+	"github.com/warewulf/warewulf/internal/pkg/container"
 	"github.com/warewulf/warewulf/internal/pkg/kernel"
 	"github.com/warewulf/warewulf/internal/pkg/node"
 )
@@ -37,6 +38,7 @@ type TemplateStruct struct {
 	Tftp          warewulfconf.TFTPConf
 	Paths         warewulfconf.BuildConfig
 	AllNodes      []node.Node
+	ContainerList []string
 	node.Node
 	// backward compatiblity
 	Container string
@@ -46,8 +48,7 @@ type TemplateStruct struct {
 /*
 Initialize an TemplateStruct with the given node.NodeInfo
 */
-func InitStruct(overlayName string, nodeData node.Node, allNodes []node.Node) (TemplateStruct, error) {
-	var tstruct TemplateStruct
+func InitStruct(overlayName string, nodeData node.Node, allNodes []node.Node) (tstruct TemplateStruct, err error) {
 	tstruct.Overlay = overlayName
 	hostname, _ := os.Hostname()
 	tstruct.BuildHost = hostname
@@ -74,6 +75,10 @@ func InitStruct(overlayName string, nodeData node.Node, allNodes []node.Node) (T
 	// init some convenience vars
 	tstruct.Id = nodeData.Id()
 	tstruct.Hostname = nodeData.Id()
+	tstruct.ContainerList, err = container.ListSources()
+	if err != nil {
+		return tstruct, err
+	}
 	tstruct.Container = nodeData.ContainerName
 	// Backwards compatibility for templates using "Keys"
 	tstruct.AllNodes = allNodes

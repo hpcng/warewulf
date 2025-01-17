@@ -1,6 +1,8 @@
 package warewulfd
 
 import (
+	"fmt"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -44,9 +46,15 @@ func parseReq(req *http.Request) (parserInfo, error) {
 		ret.efifile = path_parts[2]
 	}
 	ret.hwaddr = hwaddr
-	ret.ipaddr = strings.Split(req.RemoteAddr, ":")[0]
-	ret.remoteport, _ = strconv.Atoi(strings.Split(req.RemoteAddr, ":")[1])
-
+	ipaddr, remoteport, _ := net.SplitHostPort(req.RemoteAddr)
+	ret.ipaddr = ipaddr
+	ret.remoteport, _ = strconv.Atoi(remoteport)
+	if ret.remoteport == 0 {
+		return ret, fmt.Errorf("couldn't obtain remote port from HTTP request: %v port: %s", req.RemoteAddr, remoteport)
+	}
+	if ret.ipaddr == "" {
+		return ret, errors.New("could not obtain ipaddr from HTTP request")
+	}
 	if len(req.URL.Query()["assetkey"]) > 0 {
 		ret.assetkey = req.URL.Query()["assetkey"][0]
 	}
@@ -73,6 +81,8 @@ func parseReq(req *http.Request) (parserInfo, error) {
 			ret.stage = "efiboot"
 		} else if stage == "initramfs" {
 			ret.stage = "initramfs"
+		} else if stage == "render" {
+			ret.stage = "render"
 		}
 	}
 
@@ -92,12 +102,31 @@ func parseReq(req *http.Request) (parserInfo, error) {
 			return ret, errors.New("no hwaddr encoded in GET")
 		}
 	}
+
+	return ret, nil
+}
+
+type parserInfoRender struct {
+	overlay    string
+	node       string
+	ipaddr     string
+	remoteport int
+}
+
+func parseReqRender(req *http.Request) (ret parserInfoRender, err error) {
+	ret.overlay = strings.TrimPrefix(strings.Split(req.URL.Path, "?")[0], "/overlay")
+	if len(req.URL.Query()["node"]) > 0 {
+		ret.node = req.URL.Query()["node"][0]
+	}
+	wwlog.Info("recv: path: %s node: %s", ret.overlay, ret.node)
+	ipaddr, remoteport, _ := net.SplitHostPort(req.RemoteAddr)
+	ret.ipaddr = ipaddr
+	ret.remoteport, _ = strconv.Atoi(remoteport)
+	if ret.remoteport == 0 {
+		return ret, fmt.Errorf("couldn't obtain remote port from HTTP request: %v port: %s", req.RemoteAddr, remoteport)
+	}
 	if ret.ipaddr == "" {
 		return ret, errors.New("could not obtain ipaddr from HTTP request")
 	}
-	if ret.remoteport == 0 {
-		return ret, errors.New("could not obtain remote port from HTTP request: " + req.RemoteAddr)
-	}
-
 	return ret, nil
 }
