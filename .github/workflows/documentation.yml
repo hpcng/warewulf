@@ -13,8 +13,6 @@ on:
     branches:
       - main
       - 'v4.*.x'
-    paths:
-      - 'userdocs/**'
 
 jobs:
   publish:
@@ -29,13 +27,9 @@ jobs:
         run: |
           sudo apt update
 
-      - name: Install LaTeX dependencies
+      - name: Install dependencies
         run: |
-          sudo apt-get install -f -y texlive-latex-extra latexmk
-
-      - name: Install graphviz
-        run: |
-          sudo apt-get install -f -y graphviz
+          sudo apt-get install -f -y texlive-latex-extra latexmk graphviz pandoc
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -44,10 +38,18 @@ jobs:
         run: |
           pip install --user --upgrade --upgrade-strategy eager sphinx sphinx-rtd-theme restructuredtext_lint pygments
 
+      - name: Include reference docs
+        run: |
+          make reference
+
+      - name: Include man pages
+        run: |
+          mkdir -p userdocs/reference/man5
+          for f in docs/man/man5/*.5; do pandoc -f man -t rst -o userdocs/reference/man5/$(basename ${f%.5}.rst) $f; done
+
       - name: Build web documentation
         run: |
-          cd userdocs
-          make html
+          make -C userdocs html
 
       - name: Install SSH key
         if: github.event_name != 'pull_request'
