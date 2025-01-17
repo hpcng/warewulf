@@ -3,12 +3,17 @@ package node
 import (
 	"os"
 	"sort"
+	"syscall"
 
 	warewulfconf "github.com/warewulf/warewulf/internal/pkg/config"
 	"github.com/warewulf/warewulf/internal/pkg/wwlog"
 
 	"gopkg.in/yaml.v3"
 )
+
+func CanWriteConfig() bool {
+	return syscall.Access(warewulfconf.Get().Paths.NodesConf(), syscall.O_RDWR) == nil
+}
 
 /*
 Creates a new nodeDb object from the on-disk configuration

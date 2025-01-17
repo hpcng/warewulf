@@ -2,7 +2,11 @@ package util
 
 import (
 	"bufio"
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"io"
 	"io/fs"
 	"net"
@@ -574,4 +578,41 @@ func ByteToString(b int64) string {
 		exp++
 	}
 	return fmt.Sprintf("%.1f %ciB", float64(b)/float64(div), "KMGTPE"[exp])
+}
+
+func HashFile(file *os.File) (string, error) {
+	if prevOffset, err := file.Seek(0, 0); err != nil {
+		return "", err
+	} else {
+		hasher := sha256.New()
+		if _, err := io.Copy(hasher, file); err != nil {
+			return "", err
+		}
+		if _, err := file.Seek(prevOffset, 0); err != nil {
+			return "", err
+		}
+		return hex.EncodeToString(hasher.Sum(nil)), nil
+	}
+}
+
+func EncodeYaml(data interface{}) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	encoder := yaml.NewEncoder(buf)
+	encoder.SetIndent(2)
+	err := encoder.Encode(data)
+	return buf.Bytes(), err
+}
+
+func EqualYaml(a interface{}, b interface{}) (bool, error) {
+	aYaml, err := EncodeYaml(a)
+	if err != nil {
+		return false, err
+	}
+
+	bYaml, err := EncodeYaml(b)
+	if err != nil {
+		return false, err
+	}
+
+	return bytes.Equal(aYaml, bYaml), nil
 }

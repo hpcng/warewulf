@@ -5,7 +5,7 @@ import (
 
 	"github.com/warewulf/warewulf/internal/pkg/api/container"
 	"github.com/warewulf/warewulf/internal/pkg/api/routes/wwapiv1"
-	apiutil "github.com/warewulf/warewulf/internal/pkg/api/util"
+	"github.com/warewulf/warewulf/internal/pkg/util"
 
 	"github.com/spf13/cobra"
 )
@@ -16,7 +16,7 @@ func CobraRunE(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	if !SetYes {
-		yes := apiutil.ConfirmationPrompt(fmt.Sprintf("Are you sure you want to delete container %s", args))
+		yes := util.Confirm(fmt.Sprintf("Are you sure you want to delete container %s", args))
 		if !yes {
 			return
 		}

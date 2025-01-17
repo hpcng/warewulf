@@ -7,9 +7,9 @@ import (
 	"github.com/spf13/cobra"
 	apinode "github.com/warewulf/warewulf/internal/pkg/api/node"
 	"github.com/warewulf/warewulf/internal/pkg/api/routes/wwapiv1"
-	"github.com/warewulf/warewulf/internal/pkg/api/util"
 	"github.com/warewulf/warewulf/internal/pkg/hostlist"
 	"github.com/warewulf/warewulf/internal/pkg/node"
+	"github.com/warewulf/warewulf/internal/pkg/util"
 	"github.com/warewulf/warewulf/internal/pkg/wwlog"
 	"gopkg.in/yaml.v3"
 )
@@ -80,7 +80,7 @@ func CobraRunE(vars *variables) func(cmd *cobra.Command, args []string) (err err
 			if err != nil {
 				return nil
 			}
-			yes := util.ConfirmationPrompt(fmt.Sprintf("Are you sure you want to modify %d nodes(s)", nodeCount))
+			yes := util.Confirm(fmt.Sprintf("Are you sure you want to modify %d nodes(s)", nodeCount))
 			if !yes {
 				return nil
 			}
