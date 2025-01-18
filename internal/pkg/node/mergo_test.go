@@ -758,6 +758,30 @@ nodeprofiles:
 				"p2 netdev tag",
 			},
 		},
+		"resources": {
+			nodesConf: `
+nodeprofiles:
+  p1:
+    resources:
+      fstab:
+        - spec: warewulf:/home
+          file: /home
+          vfstype: nfs
+nodes:
+  n1:
+    profiles:
+      - p1
+    resources:
+      fstab:
+        - spec: warewulf:/opt
+          file: /opt
+          vfstype: nfs
+`,
+			nodes:   []string{"n1"},
+			fields:  []string{"Resources[fstab]"},
+			sources: []string{"p1,n1"},
+			values:  []string{"[map[file:/home spec:warewulf:/home vfstype:nfs] map[file:/opt spec:warewulf:/opt vfstype:nfs]]"},
+		},
 	}
 
 	for name, tt := range tests {
@@ -781,13 +805,13 @@ nodeprofiles:
 			}
 
 			var nodes []Node
-			for i, _ := range tt.nodes {
+			for i := range tt.nodes {
 				node, _, mergeErr := registry.MergeNode(tt.nodes[i])
 				assert.NoError(t, mergeErr)
 				nodes = append(nodes, node)
 			}
 
-			for i, _ := range tt.nodes {
+			for i := range tt.nodes {
 				_, fields, _ := registry.MergeNode(tt.nodes[i])
 				value, valueErr := getNestedFieldString(nodes[i], tt.fields[i])
 				assert.NoError(t, valueErr)

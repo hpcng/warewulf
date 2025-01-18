@@ -4,6 +4,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/warewulf/warewulf/internal/pkg/config"
+	"github.com/warewulf/warewulf/internal/pkg/wwlog"
 )
 
 func ParseConfig(data []byte) (warewulfYaml *WarewulfYaml, err error) {
@@ -175,8 +176,9 @@ func (this *NFSExportConf) Upgrade() (upgraded *config.NFSExportConf) {
 	upgraded = new(config.NFSExportConf)
 	upgraded.Path = this.Path
 	upgraded.ExportOptions = this.ExportOptions
-	upgraded.MountOptions = this.MountOptions
-	upgraded.MountP = this.Mount
+	if *(this.Mount) {
+		wwlog.Warn("Legacy mount configured for NFS export %s: use `wwctl upgrade nodes --with-warewulfconf=<original file>` to port to nodes.conf", this.Path)
+	}
 	return upgraded
 }
 

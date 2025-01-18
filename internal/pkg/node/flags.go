@@ -49,35 +49,47 @@ func (add *NodeConfAdd) CreateAddFlags(baseCmd *cobra.Command) {
 }
 
 func recursiveCreateFlags(obj interface{}, baseCmd *cobra.Command) {
-	// now iterate of every field
-	nodeInfoType := reflect.TypeOf(obj)
-	nodeInfoVal := reflect.ValueOf(obj)
-	for i := 0; i < nodeInfoVal.Elem().NumField(); i++ {
-		if nodeInfoType.Elem().Field(i).Tag.Get("comment") != "" {
-			field := nodeInfoVal.Elem().Field(i)
-			createFlags(baseCmd, nodeInfoType.Elem().Field(i), &field)
+	elemType := reflect.TypeOf(obj).Elem()
+	elemVal := reflect.ValueOf(obj).Elem()
 
-		} else if nodeInfoType.Elem().Field(i).Type.Kind() == reflect.Ptr {
-			recursiveCreateFlags(nodeInfoVal.Elem().Field(i).Interface(), baseCmd)
+	for i := 0; i < elemVal.NumField(); i++ {
+		field := elemType.Field(i)
+		fieldVal := elemVal.Field(i)
 
-		} else if nodeInfoType.Elem().Field(i).Type.Kind() == reflect.Map &&
-			nodeInfoType.Elem().Field(i).Type != reflect.TypeOf(map[string]string{}) {
-			// add a map with key UNDEF so that it can hold values N.B. UNDEF can never be added through command line
-			key := reflect.ValueOf("UNDEF")
-			if nodeInfoVal.Elem().Field(i).Len() == 0 {
-				if nodeInfoVal.Elem().Field(i).IsNil() {
-					nodeInfoVal.Elem().Field(i).Set(reflect.MakeMap(nodeInfoType.Elem().Field(i).Type))
+		if !field.IsExported() {
+			continue
+		}
+
+		if field.Tag.Get("comment") != "" {
+			createFlags(baseCmd, field, &fieldVal)
+
+		} else if field.Anonymous {
+			recursiveCreateFlags(fieldVal.Addr().Interface(), baseCmd)
+
+		} else if field.Type.Kind() == reflect.Ptr {
+			recursiveCreateFlags(fieldVal.Interface(), baseCmd)
+
+		} else if field.Type.Kind() == reflect.Struct {
+			recursiveCreateFlags(fieldVal.Addr().Interface(), baseCmd)
+
+		} else if field.Type.Kind() == reflect.Map {
+			switch field.Type.Elem().Kind() {
+			case reflect.String, reflect.Interface:
+				continue
+			case reflect.Pointer, reflect.Slice, reflect.Map:
+				// add a map with key UNDEF so that it can hold values N.B. UNDEF can never be added through command line
+				key := reflect.ValueOf("UNDEF")
+				if fieldVal.Len() == 0 {
+					if fieldVal.IsNil() {
+						fieldVal.Set(reflect.MakeMap(field.Type))
+					}
+					newPtr := reflect.New(field.Type.Elem().Elem())
+					fieldVal.SetMapIndex(key, newPtr)
+				} else {
+					key = fieldVal.MapKeys()[0]
 				}
-				newPtr := reflect.New(nodeInfoType.Elem().Field(i).Type.Elem().Elem())
-				nodeInfoVal.Elem().Field(i).SetMapIndex(key, newPtr)
-			} else {
-				key = nodeInfoVal.Elem().Field(i).MapKeys()[0]
+				recursiveCreateFlags(fieldVal.MapIndex(key).Interface(), baseCmd)
 			}
-			recursiveCreateFlags(nodeInfoVal.Elem().Field(i).MapIndex(key).Interface(), baseCmd)
-		} else if nodeInfoType.Elem().Field(i).Anonymous {
-			recursiveCreateFlags(nodeInfoVal.Elem().Field(i).Addr().Interface(), baseCmd)
-		} else if nodeInfoType.Elem().Field(i).Type.Kind() == reflect.Struct {
-			recursiveCreateFlags(nodeInfoVal.Elem().Field(i).Addr().Interface(), baseCmd)
 		}
 	}
 }

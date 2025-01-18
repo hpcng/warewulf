@@ -169,7 +169,8 @@ nodes:
     "Tags": null,
     "PrimaryNetDev": "",
     "Disks": null,
-    "FileSystems": null
+    "FileSystems": null,
+    "Resources": null
   }
 }
 `,
@@ -220,7 +221,8 @@ nodes:
     "Tags": null,
     "PrimaryNetDev": "",
     "Disks": null,
-    "FileSystems": null
+    "FileSystems": null,
+    "Resources": null
   },
   "test": {
     "Profiles": null,
@@ -238,7 +240,8 @@ nodes:
     "Tags": null,
     "PrimaryNetDev": "",
     "Disks": null,
-    "FileSystems": null
+    "FileSystems": null,
+    "Resources": null
   }
 }
 `,

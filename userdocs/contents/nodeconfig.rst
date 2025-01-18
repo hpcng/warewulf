@@ -302,3 +302,31 @@ And to unset this configuration attribute:
 
    # wwctl node list -a n001 | grep Cluster
    n001                Cluster            --           --
+
+Resources
+=========
+
+Warewulf nodes (and profiles) support generic "resources" that may hold arbitrarily complex YAML
+data. This data, along with tags, may be used by both distribution and site overlays.
+
+.. code-block:: yaml
+
+   nodeprofiles:
+     default:
+       resources:
+         fstab:
+           - spec: warewulf:/home
+             file: /home
+             vfstype: nfs
+             mntops: defaults
+             freq: 0
+             passno: 0
+           - spec: warewulf:/opt
+             file: /opt
+             vfstype: nfs
+             mntops: defaults,ro
+             freq: 0
+             passno: 0
+
+Due to the arbitrary nature of generic resource data, it can only be managed with `wwctl
+<node|profile> edit`.

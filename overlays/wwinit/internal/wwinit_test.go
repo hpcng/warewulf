@@ -78,12 +78,8 @@ nfs:
   export paths:
   - path: /home
     export options: rw,sync
-    mount options: defaults
-    mount: true
   - path: /opt
     export options: ro,sync,no_root_squash
-    mount options: defaults
-    mount: false
 `
 
 const wwinit_config string = `backupFile: true

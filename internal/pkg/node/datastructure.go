@@ -15,8 +15,8 @@ const undef string = "UNDEF"
 Structure of which goes to disk
 */
 type NodesYaml struct {
-	NodeProfiles map[string]*Profile
-	Nodes        map[string]*Node
+	NodeProfiles map[string]*Profile `yaml:"nodeprofiles"`
+	Nodes        map[string]*Node    `yaml:"nodes"`
 }
 
 /*
@@ -53,6 +53,7 @@ type Profile struct {
 	PrimaryNetDev  string                 `yaml:"primary network,omitempty" lopt:"primarynet" sopt:"p" comment:"Set the primary network interface"`
 	Disks          map[string]*Disk       `yaml:"disks,omitempty"`
 	FileSystems    map[string]*FileSystem `yaml:"filesystems,omitempty"`
+	Resources      map[string]Resource    `yaml:"resources,omitempty"`
 }
 
 type IpmiConf struct {
@@ -124,3 +125,5 @@ type FileSystem struct {
 	Options        []string `yaml:"options,omitempty" comment:"any additional options to be passed to the format-specific mkfs utility"`
 	MountOptions   string   `yaml:"mount_options,omitempty" comment:"any special options to be passed to the mount command"`
 }
+
+type Resource interface{}

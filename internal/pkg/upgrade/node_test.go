@@ -1,7 +1,6 @@
 package upgrade
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,6 +15,7 @@ var nodesYamlUpgradeTests = []struct {
 	files           map[string]string
 	legacyYaml      string
 	upgradedYaml    string
+	warewulfConf    string
 }{
 	{
 		name:            "captured vers42 example",
@@ -769,6 +769,64 @@ nodeprofiles:
 nodes: {}
 `,
 	},
+	{
+		name: "Legacy export mounts",
+		legacyYaml: `
+nodeprofiles:
+  default: {}
+`,
+		upgradedYaml: `
+nodeprofiles:
+  default:
+    resources:
+      fstab:
+        - spec: warewulf:/home
+          file: /home
+          vfstype: nfs
+        - spec: warewulf:/opt
+          file: /opt
+          vfstype: nfs
+nodes: {}
+`,
+		warewulfConf: `
+nfs:
+  exports:
+  - /home
+  - /opt
+`,
+	},
+	{
+		name: "Legacy extended export mounts",
+		legacyYaml: `
+nodeprofiles:
+  default: {}
+`,
+		upgradedYaml: `
+nodeprofiles:
+  default:
+    resources:
+      fstab:
+        - spec: warewulf:/home
+          file: /home
+          vfstype: nfs
+        - spec: warewulf:/opt
+          file: /opt
+          mntops: defaults,ro
+          vfstype: nfs
+nodes: {}
+`,
+		warewulfConf: `
+nfs:
+  export paths:
+  - path: /home
+    mount: true
+  - path: /opt
+    mount options: defaults,ro
+    mount: true
+  - path: /var
+    mount: false
+`,
+	},
 }
 
 func Test_UpgradeNodesYaml(t *testing.T) {
@@ -781,12 +839,14 @@ func Test_UpgradeNodesYaml(t *testing.T) {
 					env.WriteFile(fileName, content)
 				}
 			}
+			conf, err := ParseConfig([]byte(tt.warewulfConf))
+			assert.NoError(t, err)
 			legacy, err := ParseNodes([]byte(tt.legacyYaml))
 			assert.NoError(t, err)
-			upgraded := legacy.Upgrade(tt.addDefaults, tt.replaceOverlays)
+			upgraded := legacy.Upgrade(tt.addDefaults, tt.replaceOverlays, conf)
 			upgradedYaml, err := upgraded.Dump()
 			assert.NoError(t, err)
-			assert.Equal(t, strings.TrimSpace(tt.upgradedYaml), strings.TrimSpace(string(upgradedYaml)))
+			assert.YAMLEq(t, tt.upgradedYaml, string(upgradedYaml))
 		})
 	}
 }

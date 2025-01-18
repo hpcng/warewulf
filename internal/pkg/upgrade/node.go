@@ -1,6 +1,7 @@
 package upgrade
 
 import (
+	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -50,7 +51,7 @@ type NodesYaml struct {
 	Nodes        map[string]*Node
 }
 
-func (this *NodesYaml) Upgrade(addDefaults bool, replaceOverlays bool) (upgraded *node.NodesYaml) {
+func (this *NodesYaml) Upgrade(addDefaults bool, replaceOverlays bool, warewulfconf *WarewulfYaml) (upgraded *node.NodesYaml) {
 	upgraded = new(node.NodesYaml)
 	upgraded.NodeProfiles = make(map[string]*node.Profile)
 	upgraded.Nodes = make(map[string]*node.Node)
@@ -91,6 +92,50 @@ func (this *NodesYaml) Upgrade(addDefaults bool, replaceOverlays bool) (upgraded
 		}
 		if defaultProfile.Ipxe == "" {
 			defaultProfile.Ipxe = "default"
+		}
+	}
+	if warewulfconf != nil && warewulfconf.NFS != nil {
+		var fstab []map[string]string
+		for _, export := range warewulfconf.NFS.Exports {
+			fmt.Printf("PORTING EXPORT: %s\n", export)
+			fstab = append(fstab, map[string]string{
+				"spec":    fmt.Sprintf("warewulf:%s", export),
+				"file":    export,
+				"vfstype": "nfs",
+			})
+		}
+		for _, export := range warewulfconf.NFS.ExportsExtended {
+			if export.Mount != nil && *(export.Mount) {
+				entry := map[string]string{
+					"spec":    fmt.Sprintf("warewulf:%s", export.Path),
+					"file":    export.Path,
+					"vfstype": "nfs",
+				}
+				if export.MountOptions != "" {
+					entry["mntops"] = export.MountOptions
+				}
+				fstab = append(fstab, entry)
+			}
+		}
+		fmt.Printf("FSTAB: %+v\n", fstab)
+		if len(fstab) > 0 {
+			if _, ok := upgraded.NodeProfiles["default"]; !ok {
+				upgraded.NodeProfiles["default"] = new(node.Profile)
+			}
+			if upgraded.NodeProfiles["default"].Resources == nil {
+				upgraded.NodeProfiles["default"].Resources = make(map[string]node.Resource)
+			}
+			if _, ok := upgraded.NodeProfiles["default"].Resources["fstab"]; ok {
+				if prevFstab, ok := (upgraded.NodeProfiles["default"].Resources["fstab"]).([]map[string]string); ok {
+					newFstab := append(prevFstab, fstab...)
+					upgraded.NodeProfiles["default"].Resources["fstab"] = newFstab
+				} else {
+					wwlog.Warn("Unable to port NFS mounts from warewulf.conf: incompatible existing fstab resource in default profile")
+				}
+			} else {
+				upgraded.NodeProfiles["default"].Resources["fstab"] = fstab
+			}
+			fmt.Printf("RECORDED FSTAB: %+v\n", upgraded.NodeProfiles["default"].Resources["fstab"])
 		}
 	}
 	return upgraded

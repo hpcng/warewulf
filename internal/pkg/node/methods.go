@@ -154,13 +154,16 @@ func recursiveFlatten(obj interface{}) (hasContent bool) {
 		case reflect.Map:
 			mapIter := valObj.Elem().Field(i).MapRange()
 			for mapIter.Next() {
-				if mapIter.Value().Kind() == reflect.String {
-					if mapIter.Value().String() != "" {
-						hasContent = true
+				switch mapIter.Value().Kind() {
+				case reflect.Map, reflect.Pointer, reflect.Slice:
+					if mapIter.Value().Type().Elem().Kind() == reflect.Struct {
+						ret := recursiveFlatten(mapIter.Value().Interface())
+						hasContent = ret || hasContent
+					} else {
+						hasContent = !mapIter.Value().IsZero() || hasContent
 					}
-				} else {
-					ret := recursiveFlatten(mapIter.Value().Interface())
-					hasContent = ret || hasContent
+				default:
+					hasContent = !mapIter.Value().IsZero() || hasContent
 				}
 			}
 

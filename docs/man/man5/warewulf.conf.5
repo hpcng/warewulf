@@ -209,9 +209,8 @@ Default: true
 .TP
 \fBexport paths\fP
 
-A list of paths to be exported by the NFS service and, optionally, to
-be automatically mounted on compute nodes. Each item in the list is,
-itself, a map of parameters for the mount. (See the \fBEXAMPLE\fP
+A list of paths to be exported by the NFS service. Each item in the list is,
+itself, a map of parameters for the export. (See the \fBEXAMPLE\fP
 section for overall structure.)
 
 .RS
@@ -234,27 +233,6 @@ generating /etc/exports or similar.
 Default: rw,sync,no_subtree_check
 .IP
 
-.TP
-\fBmount options\fP
-
-The NFS mount options to use when mounting the given \fBpath\fP on
-compute nodes via the NFS service. Provided to the compute node's
-overlays as the variable \fB.Nfs.ExportsExtended[].MountOptions\fP,
-typically for use in generating /etc/fstab or similar.
-
-Default: defaults
-.IP
-
-.TP
-\fBmount\fP
-
-If true, mount the NFS share automatically on compute nodes. Provided
-to the compute node's overlays as the variable
-\fB.Nfs.ExportsExtended[].Mount\fP, typically for use in generating
-/etc/fstab or similar.
-
-Default: true
-.IP
 .RE
 .IP
 
@@ -297,12 +275,8 @@ nfs:
   export paths:
   - path: /home
     export options: rw,sync
-    mount options: defaults
-    mount: true
   - path: /opt
     export options: ro,sync,no_root_squash
-    mount options: defaults
-    mount: true
   systemd name: nfs-server
 .EE
 

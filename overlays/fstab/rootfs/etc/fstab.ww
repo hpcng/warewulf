@@ -12,12 +12,7 @@ proc /proc proc defaults 0 0
 {{- if $fs.MountOptions }} noauto{{range $index,$opt := $fs.MountOptions }},{{ $opt }}{{ end }} 0 0
 {{- else }} noauto,defaults 0 0
 {{- end }}{{ end }}{{ end }}
-{{- $IP:=.Ipaddr }}
-{{- if .Nfs.Enabled }}
-# nfs mounts provided in warewulf.conf
-{{- range .Nfs.ExportsExtended }}
-{{- if .Mount }}
-{{ $IP }}:{{ .Path }} {{ .Path }} nfs {{ .MountOptions }} 0 0
-{{- end }}
-{{- end }}
-{{- end }}
+{{- with $fstab := index .Resources "fstab" }}
+{{- range $entry := $fstab }}
+{{ index $entry "spec" }} {{ index $entry "file" }} {{ default "nfs" (index $entry "vfstype") }} {{ default "defaults" (index $entry "mntops") }} {{ default 0 (index $entry "freq") }} {{ default 0 (index $entry "passno") }}
+{{- end }}{{ end }}

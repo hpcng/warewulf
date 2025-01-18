@@ -34,6 +34,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - New "localtime" overlay to define the system time zone. #1303
 - Add support for nested profiles. #1572, #1598
 - Adds `wwctl container <exec|shell> --build=false` to prevent automatically (re)building the container. #1490, #1489
+- Added resources as generic, arbitrary YAML data for nodes and profiles. #1568
+- New `fstab` resource configures mounts in fstab overlay, including NFS mounts. #515
 
 ### Changed
 
@@ -101,6 +103,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove `wwctl kernel` #1556
 - Remove `wwctl <node|profile> <add|set> --kerneloverride` #1556
 - Remove `wwctl container <build|import> --setdefault` #1335
+- Remove NFS mount options from warewulf.conf. #515
 
 ### Fixed
 

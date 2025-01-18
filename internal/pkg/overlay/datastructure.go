@@ -80,7 +80,7 @@ func InitStruct(overlayName string, nodeData node.Node, allNodes []node.Node) (T
 	dt := time.Now()
 	tstruct.BuildTime = dt.Format("01-02-2006 15:04:05 MST")
 	tstruct.BuildTimeUnix = strconv.FormatInt(dt.Unix(), 10)
-	tstruct.Node.Tags = map[string]string{}
+	// tstruct.Node.Tags = map[string]string{}
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
 	dec := gob.NewDecoder(&buf)

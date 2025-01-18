@@ -17,6 +17,9 @@ nodeprofiles:
       override:
         device: ib0
         type: profile
+  resources:
+    fstab:
+    - file: /home
 nodes:
   test_node1:
     network devices:
@@ -51,7 +54,7 @@ nodes:
     network devices:
       override:
         device: ib1
-  `
+`
 	var ret NodesYaml
 	err := yaml.Unmarshal([]byte(data), &ret)
 	assert.NoError(t, err)

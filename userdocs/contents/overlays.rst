@@ -102,8 +102,21 @@ interface configuration should handle this dynamically.)
 fstab
 -----
 
-The **fstab** overlay configures ``/etc/fstab`` to mount NFS shares defined in
-``/etc/warewulf.conf`` and file systems created by Ignition.
+The **fstab** overlay configures ``/etc/fstab`` based on the data provided in the "fstab"
+resource. It also creates entries for file systems defined by Ignition.
+
+.. code-block:: yaml
+
+   nodeprofiles:
+     default:
+       resources:
+         fstab:
+           - spec: warewulf:/home
+             file: /home
+             vfstype: nfs
+           - spec: warewulf:/opt
+             file: /opt
+             vfstype: nfs
 
 ssh
 ---

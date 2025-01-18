@@ -46,7 +46,8 @@ func templateFileBlock(inc string, abortStr string) (string, error) {
 	wwlog.Debug("Including file block into template: %s", inc)
 	readFile, err := os.Open(inc)
 	if err != nil {
-		return "", err
+		wwlog.Info("couldn't read block %s: %s", inc, err)
+		return abortStr, nil
 	}
 	defer readFile.Close()
 	var cont string

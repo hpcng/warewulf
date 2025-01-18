@@ -47,6 +47,7 @@ func CobraRunE(vars *variables) func(cmd *cobra.Command, args []string) (err err
 			return fmt.Errorf("partition and disk must be specified")
 		}
 		delete(vars.profileConf.Disks, "UNDEF")
+		vars.profileConf.Ipmi.Tags = vars.profileAdd.IpmiTagsAdd
 		buffer, err := yaml.Marshal(vars.profileConf)
 		if err != nil {
 			return fmt.Errorf("can not marshall nodeInfo: %s", err)

@@ -63,6 +63,5 @@ proc /proc proc defaults 0 0
 # all with noauto as mounts happens with systemd units
 /dev/disk/by-partlabel/scratch /scratch btrfs noauto,defaults 0 0
 /dev/disk/by-partlabel/swap swap swap noauto,defaults 0 0
-# nfs mounts provided in warewulf.conf
-192.168.0.1:/home /home nfs defaults 0 0
+warewulf:/home /home nfs defaults 0 0
 `

@@ -25,6 +25,8 @@ func CobraRunE(vars *variables) func(cmd *cobra.Command, args []string) error {
 		if !node.ObjectIsEmpty(vars.nodeConf.NetDevs["UNDEF"]) {
 			netDev := *vars.nodeConf.NetDevs["UNDEF"]
 			vars.nodeConf.NetDevs[vars.nodeAdd.Net] = &netDev
+			vars.nodeConf.NetDevs[vars.nodeAdd.Net].Tags = vars.nodeAdd.NetTagsAdd
+
 		}
 		delete(vars.nodeConf.NetDevs, "UNDEF")
 		if vars.nodeAdd.FsName != "" {
@@ -50,6 +52,7 @@ func CobraRunE(vars *variables) func(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("partition and disk must be specified")
 		}
 		delete(vars.nodeConf.Disks, "UNDEF")
+		vars.nodeConf.Ipmi.Tags = vars.nodeAdd.IpmiTagsAdd
 		if len(vars.nodeConf.Profiles) == 0 {
 			vars.nodeConf.Profiles = []string{"default"}
 		}

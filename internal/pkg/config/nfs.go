@@ -21,12 +21,6 @@ func (this NFSConf) Enabled() bool {
 type NFSExportConf struct {
 	Path          string `yaml:"path" default:"/dev/null"`
 	ExportOptions string `yaml:"export options,omitempty" default:"rw,sync,no_subtree_check"`
-	MountOptions  string `yaml:"mount options,omitempty" default:"defaults"`
-	MountP        *bool  `yaml:"mount,omitempty" default:"true"`
-}
-
-func (this NFSExportConf) Mount() bool {
-	return BoolP(this.MountP)
 }
 
 // Implements the Unmarshal interface for NFSConf to set default

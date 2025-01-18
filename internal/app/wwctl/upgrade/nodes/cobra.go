@@ -16,6 +16,7 @@ var (
 	replaceOverlays bool
 	inputPath       string
 	outputPath      string
+	inputConfPath   string
 )
 
 func GetCommand() *cobra.Command {
@@ -31,6 +32,7 @@ supported by the current version.`,
 	command.Flags().BoolVar(&replaceOverlays, "replace-overlays", false, "Replace 'wwinit' and 'generic' overlays with their split replacements")
 	command.Flags().StringVarP(&inputPath, "input-path", "i", "", "Path to a legacy nodes.conf")
 	command.Flags().StringVarP(&outputPath, "output-path", "o", "", "Path to write the upgraded nodes.conf to")
+	command.Flags().StringVar(&inputConfPath, "with-warewulfconf", config.ConfigFile, "Path to a legacy warewulf.conf")
 	if err := command.MarkFlagRequired("add-defaults"); err != nil {
 		panic(err)
 	}
@@ -49,6 +51,16 @@ func UpgradeNodesConf(cmd *cobra.Command, args []string) error {
 	if outputPath == "" {
 		outputPath = config.Get().Paths.NodesConf()
 	}
+
+	confData, err := os.ReadFile(inputConfPath)
+	if err != nil {
+		return err
+	}
+	warewulfConf, err := upgrade.ParseConfig(confData)
+	if err != nil {
+		return err
+	}
+
 	data, err := os.ReadFile(inputPath)
 	if err != nil {
 		return err
@@ -57,7 +69,7 @@ func UpgradeNodesConf(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	upgraded := legacy.Upgrade(addDefaults, replaceOverlays)
+	upgraded := legacy.Upgrade(addDefaults, replaceOverlays, warewulfConf)
 	if outputPath == "-" {
 		upgradedYaml, err := upgraded.Dump()
 		if err != nil {

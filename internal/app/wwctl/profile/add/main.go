@@ -18,32 +18,33 @@ func CobraRunE(vars *variables) func(cmd *cobra.Command, args []string) (err err
 		// to this network
 		if !node.ObjectIsEmpty(vars.profileConf.NetDevs["UNDEF"]) {
 			netDev := *vars.profileConf.NetDevs["UNDEF"]
-			vars.profileConf.NetDevs[vars.nodeAdd.Net] = &netDev
+			vars.profileConf.NetDevs[vars.profileAdd.Net] = &netDev
 		}
 		delete(vars.profileConf.NetDevs, "UNDEF")
-		if vars.nodeAdd.FsName != "" {
-			if !strings.HasPrefix(vars.nodeAdd.FsName, "/dev") {
-				if vars.nodeAdd.FsName == vars.nodeAdd.PartName {
-					vars.nodeAdd.FsName = "/dev/disk/by-partlabel/" + vars.nodeAdd.PartName
+		if vars.profileAdd.FsName != "" {
+			if !strings.HasPrefix(vars.profileAdd.FsName, "/dev") {
+				if vars.profileAdd.FsName == vars.profileAdd.PartName {
+					vars.profileAdd.FsName = "/dev/disk/by-partlabel/" + vars.profileAdd.PartName
 				} else {
 					return fmt.Errorf("filesystems need to have a underlying blockdev")
 				}
 			}
 			fs := *vars.profileConf.FileSystems["UNDEF"]
-			vars.profileConf.FileSystems[vars.nodeAdd.FsName] = &fs
+			vars.profileConf.FileSystems[vars.profileAdd.FsName] = &fs
 		}
 		delete(vars.profileConf.FileSystems, "UNDEF")
-		if vars.nodeAdd.DiskName != "" && vars.nodeAdd.PartName != "" {
+		if vars.profileAdd.DiskName != "" && vars.profileAdd.PartName != "" {
 			prt := *vars.profileConf.Disks["UNDEF"].Partitions["UNDEF"]
-			vars.profileConf.Disks["UNDEF"].Partitions[vars.nodeAdd.PartName] = &prt
+			vars.profileConf.Disks["UNDEF"].Partitions[vars.profileAdd.PartName] = &prt
 			delete(vars.profileConf.Disks["UNDEF"].Partitions, "UNDEF")
 			dsk := *vars.profileConf.Disks["UNDEF"]
-			vars.profileConf.Disks[vars.nodeAdd.DiskName] = &dsk
+			vars.profileConf.Disks[vars.profileAdd.DiskName] = &dsk
 		}
-		if (vars.nodeAdd.DiskName != "") != (vars.nodeAdd.PartName != "") {
+		if (vars.profileAdd.DiskName != "") != (vars.profileAdd.PartName != "") {
 			return fmt.Errorf("partition and disk must be specified")
 		}
 		delete(vars.profileConf.Disks, "UNDEF")
+		vars.profileConf.Ipmi.Tags = vars.profileAdd.IpmiTagsAdd
 		buffer, err := yaml.Marshal(vars.profileConf)
 		if err != nil {
 			return fmt.Errorf("can not marshall nodeInfo: %w", err)

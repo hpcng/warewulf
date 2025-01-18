@@ -479,7 +479,8 @@ nodes:
     "Tags": {},
     "PrimaryNetDev": "",
     "Disks": null,
-    "FileSystems": null
+    "FileSystems": null,
+    "Resources": null
   }
 ]
 `,
@@ -529,7 +530,8 @@ nodes:
     "Tags": {},
     "PrimaryNetDev": "",
     "Disks": null,
-    "FileSystems": null
+    "FileSystems": null,
+    "Resources": null
   },
   {
     "Discoverable": "",
@@ -563,7 +565,8 @@ nodes:
     "Tags": {},
     "PrimaryNetDev": "",
     "Disks": null,
-    "FileSystems": null
+    "FileSystems": null,
+    "Resources": null
   }
 ]
 `,

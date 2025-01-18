@@ -94,12 +94,8 @@ nfs:
   export paths:
   - path: /home
     export options: rw,sync
-    mount options: defaults
-    mount: true
   - path: /opt
     export options: ro,sync,no_root_squash
-    mount options: defaults
-    mount: false
   systemd name: nfs-server
 container mounts:
   - source: /etc/resolv.conf
@@ -138,12 +134,8 @@ container mounts:
 	assert.True(t, conf.NFS.Enabled())
 	assert.Equal(t, "/home", conf.NFS.ExportsExtended[0].Path)
 	assert.Equal(t, "rw,sync", conf.NFS.ExportsExtended[0].ExportOptions)
-	assert.Equal(t, "defaults", conf.NFS.ExportsExtended[0].MountOptions)
-	assert.True(t, conf.NFS.ExportsExtended[0].Mount())
 	assert.Equal(t, "/opt", conf.NFS.ExportsExtended[1].Path)
 	assert.Equal(t, "ro,sync,no_root_squash", conf.NFS.ExportsExtended[1].ExportOptions)
-	assert.Equal(t, "defaults", conf.NFS.ExportsExtended[1].MountOptions)
-	assert.False(t, conf.NFS.ExportsExtended[1].Mount())
 	assert.Equal(t, "nfs-server", conf.NFS.SystemdName)
 
 	assert.Equal(t, "/etc/resolv.conf", conf.MountsContainer[0].Source)

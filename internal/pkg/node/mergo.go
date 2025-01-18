@@ -1,42 +1,15 @@
 package node
 
 import (
-	"bytes"
-	"encoding/gob"
 	"reflect"
 	"strings"
 
 	"dario.cat/mergo"
+	"github.com/mohae/deepcopy"
 
 	"github.com/warewulf/warewulf/internal/pkg/util"
 	"github.com/warewulf/warewulf/internal/pkg/wwlog"
 )
-
-// copyProfile creates a deep copy of the given Profile object.
-// It uses encoding/gob to serialize and deserialize the Profile, ensuring
-// that all nested fields are copied.
-//
-// Parameters:
-// - original: The Profile object to be copied.
-//
-// Returns:
-// - A new Profile object that is a deep copy of the input.
-// - An error if serialization or deserialization fails.
-func copyProfile(original Profile) (Profile, error) {
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	dec := gob.NewDecoder(&buf)
-	profile := Profile{}
-	if err := enc.Encode(original); err != nil {
-		return profile, err
-	} else {
-		if err := dec.Decode(&profile); err != nil {
-			return profile, err
-		} else {
-			return profile, nil
-		}
-	}
-}
 
 // getNodeProfiles retrieves a list of profile IDs associated with a specific node ID.
 // It retrives nested profiles and ensures the list is cleaned of duplicates
@@ -85,6 +58,33 @@ func (config *NodesYaml) appendProfileProfiles(profiles []string, id string) []s
 	return profiles
 }
 
+type InterfaceTransformer struct{}
+
+func (t InterfaceTransformer) Transformer(typ reflect.Type) func(dst, src reflect.Value) error {
+	if typ.Kind() == reflect.Interface {
+		return func(dst, src reflect.Value) error {
+			if !src.IsValid() || src.IsZero() {
+				return nil
+			}
+
+			// Handle merging of concrete values
+			switch src.Interface().(type) {
+			case map[string]interface{}:
+				if dst.IsNil() {
+					dst.Set(reflect.New(src.Elem().Type()).Elem())
+				}
+				return mergo.Merge(dst.Interface(), src.Interface(), mergo.WithAppendSlice, mergo.WithOverride, mergo.WithTransformers(t))
+			case []interface{}:
+				dst.Set(src)
+			default:
+				dst.Set(src)
+			}
+			return nil
+		}
+	}
+	return nil
+}
+
 // MergeNode merges the configuration of a node identified by `id` with all the profiles
 // associated with it, producing a fully composed `Node` and a `fieldMap` detailing the
 // sources of various configuration fields.
@@ -121,11 +121,9 @@ func (config *NodesYaml) MergeNode(id string) (node Node, fields fieldMap, err e
 		if profile, err := config.GetProfile(profileID); err != nil {
 			wwlog.Warn("profile not found: %s", profileID)
 			continue
-		} else if profile, err := copyProfile(profile); err != nil {
-			wwlog.Warn("error processing profile %s: %v", profileID, err)
-			continue
 		} else {
-			if err = mergo.Merge(&node.Profile, profile, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
+			profile := deepcopy.Copy(profile)
+			if err = mergo.Merge(&node.Profile, profile, mergo.WithAppendSlice, mergo.WithOverride, mergo.WithTransformers(InterfaceTransformer{})); err != nil {
 				return node, fields, err
 			}
 			for _, fieldName := range listFields(profile) {
@@ -150,8 +148,15 @@ func (config *NodesYaml) MergeNode(id string) (node Node, fields fieldMap, err e
 		if value, err := getNestedFieldValue(originalNode, fieldName); err == nil && valueStr(value) != "" {
 			source := ""
 			prevSource := fields.Source(fieldName)
-			if value.Kind() == reflect.Slice && prevSource != "" {
-				source = strings.Join([]string{prevSource, id}, ",")
+			if prevSource != "" {
+				switch value.Kind() {
+				case reflect.Slice:
+					source = strings.Join([]string{prevSource, id}, ",")
+				case reflect.Interface:
+					if _, ok := value.Interface().([]interface{}); ok {
+						source = strings.Join([]string{prevSource, id}, ",")
+					}
+				}
 			}
 			if value, err := getNestedFieldString(node, fieldName); err == nil {
 				fields.Set(fieldName, source, value)

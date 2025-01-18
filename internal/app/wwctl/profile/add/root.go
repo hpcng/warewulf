@@ -12,7 +12,7 @@ import (
 
 type variables struct {
 	profileConf node.Profile
-	nodeAdd     node.NodeConfAdd
+	profileAdd  node.NodeConfAdd
 }
 
 // GetRootCommand returns the root cobra.Command for the application.
@@ -29,7 +29,7 @@ func GetCommand() *cobra.Command {
 		Args:                  cobra.ExactArgs(1),
 	}
 	vars.profileConf.CreateFlags(baseCmd)
-	vars.nodeAdd.CreateAddFlags(baseCmd)
+	vars.profileAdd.CreateAddFlags(baseCmd)
 	// register the command line completions
 	if err := baseCmd.RegisterFlagCompletionFunc("container", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		list, _ := container.ListSources()
